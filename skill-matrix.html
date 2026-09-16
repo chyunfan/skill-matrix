@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人岗匹配矩阵工具</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+<style>
+:root{
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --line:#e3e8ef;
+  --line2:#cfd8e3;
+  --text:#1e293b;
+  --muted:#64748b;
+  --faint:#94a3b8;
+  --primary:#1c5fb0;
+  --primary-d:#154c8f;
+  --primary-l:#e8f1fb;
+  --l3:#1553a8;
+  --l2:#2f9de8;
+  --l1:#a8bcd4;
+  --l0:#f1f5f9;
+  --head:#22384f;
+  --name-col:#eef2f7;
+  --danger:#c0392b;
+  --ok:#1f8a5b;
+  --warn:#b7791f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font:14px/1.55 "Microsoft YaHei","PingFang SC","Hiragino Sans GB","Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+/* ---------- 顶栏 ---------- */
+.topbar{
+  background:var(--card);border-bottom:1px solid var(--line);
+  padding:14px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:40;
+}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-size:17px;font-weight:700;letter-spacing:.5px}
+.brand .dot{width:9px;height:9px;border-radius:2px;background:var(--l3);display:inline-block;margin-right:8px}
+.brand .ver{font-size:11px;color:var(--faint)}
+.topbar .spacer{flex:1}
+.saveflag{font-size:12px;color:var(--faint)}
+/* ---------- 标签页 ---------- */
+.tabs{display:flex;gap:2px;background:var(--card);padding:0 22px;border-bottom:1px solid var(--line);position:sticky;top:57px;z-index:39}
+.tab{
+  padding:11px 20px;font-size:14px;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;user-select:none;white-space:nowrap;
+}
+.tab:hover{color:var(--primary);background:#f8fafc}
+.tab.on{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.tab .badge{
+  display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;
+  background:var(--primary-l);color:var(--primary);font-size:11px;line-height:18px;text-align:center;font-weight:600;
+}
+/* ---------- 布局 ---------- */
+main{padding:18px 22px 60px;max-width:1600px}
+.panel{display:none}
+.panel.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:16px;overflow:hidden}
+.card-head{
+  padding:11px 16px;border-bottom:1px solid var(--line);font-weight:600;font-size:14px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fbfcfe;
+}
+.card-head .sub{font-weight:400;font-size:12px;color:var(--faint)}
+.card-head .spacer{flex:1}
+.card-body{padding:16px}
+.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .spacer{flex:1}
+/* ---------- 控件 ---------- */
+.btn{
+  border:1px solid var(--line2);background:#fff;color:var(--text);
+  padding:7px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;
+  transition:background .12s,border-color .12s;white-space:nowrap;
+}
+.btn:hover{background:#f4f7fb;border-color:#b8c6d8}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-d);border-color:var(--primary-d)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--primary);padding:7px 8px}
+.btn.ghost:hover{background:var(--primary-l)}
+.btn.danger{color:var(--danger);border-color:#e8cfcb}
+.btn.danger:hover{background:#fdf3f2;border-color:#d9aca5}
+.btn.sm{padding:4px 10px;font-size:12px}
+input[type=text],input[type=search],select,textarea{
+  border:1px solid var(--line2);border-radius:6px;padding:6px 10px;font-size:13px;
+  font-family:inherit;color:var(--text);background:#fff;outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-l)}
+label.inline{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+label.inline input{accent-color:var(--primary)}
+.chkrow{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+/* ---------- 表格 ---------- */
+.table-wrap{overflow:auto;max-height:calc(100vh - 320px)}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+th{
+  background:#f7f9fc;color:var(--muted);font-weight:600;text-align:left;
+  padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;
+  position:sticky;top:0;z-index:2;
+}
+td{padding:5px 8px;border-bottom:1px solid #eef2f7;vertical-align:middle}
+tbody tr:hover td{background:#fafcff}
+td input,td select{border:1px solid transparent;background:transparent;padding:4px 6px;width:100%;border-radius:4px;font-size:13px}
+td input:hover{border-color:var(--line2)}
+td input:focus{border-color:var(--primary);background:#fff}
+.idx{color:var(--faint);font-size:12px;text-align:center;width:38px}
+.empty{padding:44px;text-align:center;color:var(--faint);font-size:13px;line-height:2}
+.empty b{color:var(--muted)}
+/* ---------- 技能评分矩阵 ---------- */
+.stable th.skcol{text-align:center;cursor:pointer}
+.stable td.skc{text-align:center;padding:4px}
+.sc-cell{
+  height:38px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;cursor:pointer;user-select:none;transition:filter .1s;color:#fff;
+}
+.sc-cell:hover{filter:brightness(.93)}
+.sc-cell.lv0{background:var(--l0);color:#b6c2d1;border:1px dashed #dde5ee}
+.sc-cell.lv1{background:var(--l1)}
+.sc-cell.lv2{background:var(--l2)}
+.sc-cell.lv3{background:var(--l3)}
+.pill{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:600}
+/* 熟练度标签居中：▲ 绝对定位在标签外侧，不参与布局，标签始终真正居中 */
+.fit-cell{text-align:center}
+.fit-wrap{position:relative;display:inline-block}
+.fit-flag{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:3px;color:#c0392b;font-size:11px;line-height:1}
+.pill.g{background:#e7f5ee;color:var(--ok)}
+.pill.y{background:#fdf4e3;color:var(--warn)}
+.pill.r{background:#fdeceb;color:var(--danger)}
+/* ---------- 匹配矩阵 ---------- */
+.mx-scroll{overflow:auto;padding:22px 22px 10px}
+.mx-title{font-size:19px;font-weight:700;letter-spacing:1px;color:var(--text);margin-bottom:3px}
+.mx-subtitle{font-size:12px;color:var(--muted);margin-bottom:14px}
+.mx{display:flex;flex-direction:column;width:100%;min-width:max-content;background:#fff;border-radius:4px;overflow:hidden}
+.mx-headrow{display:flex}
+.mx-corner{flex:0 0 140px;background:var(--head);height:48px}
+.mx-hc{
+  flex:1 0 130px;height:48px;background:var(--head);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;letter-spacing:.5px;
+  border-left:2px solid #fff;
+}
+.mx-group{
+  background:#dce7f3;color:#2b4a6f;font-size:13px;font-weight:700;letter-spacing:.5px;
+  padding:7px 14px;border-top:2px solid #fff;
+}
+.mx-row{display:flex}
+.mx-name{
+  flex:0 0 140px;background:var(--name-col);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-top:2px solid #fff;padding:4px 6px;text-align:center;
+}
+.mx-name .n{font-size:15px;font-weight:700;color:#20344c;line-height:1.25}
+.mx-name .s{font-size:11px;color:#7b8ea6;line-height:1.3;margin-top:1px}
+.mx-c{
+  flex:1 0 130px;height:52px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;border-left:2px solid #fff;border-top:2px solid #fff;color:#fff;
+}
+.mx-c.lv0{background:#fbfcfe;border-left-color:#eef2f7;border-top-color:#eef2f7;color:#cbd5e1}
+.mx-c.lv1{background:var(--l1)}
+.mx-c.lv2{background:var(--l2)}
+.mx-c.lv3{background:var(--l3)}
+.mx-sum{display:flex;background:#f2f6fb;border-top:2px solid #fff}
+.mx-sum .mx-name{background:#e6eef8;font-size:12px;font-weight:700;color:#2b4a6f}
+.mx-sum .mx-c{background:#f2f6fb;color:#3d5a7d;font-size:12px;font-weight:600;border-top:none}
+.legend{display:flex;gap:22px;align-items:center;padding:14px 22px 20px;flex-wrap:wrap}
+.legend .item{display:flex;align-items:center;gap:7px;font-size:13px;color:#3d5a7d}
+.legend .sw{width:20px;height:20px;border-radius:3px}
+.legend .sw.lv0{background:#fbfcfe;border:1px dashed #cfd8e3}
+.legend .sw.lv1{background:var(--l1)}
+.legend .sw.lv2{background:var(--l2)}
+.legend .sw.lv3{background:var(--l3)}
+.legend .note{margin-left:auto;font-size:12px;color:var(--faint)}
+/* ---------- 洞察 ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:1100px){.grid2{grid-template-columns:1fr}}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.stat{
+  flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+}
+.stat .k{font-size:12px;color:var(--muted);margin-bottom:5px}
+.stat .v{font-size:23px;font-weight:700;color:var(--primary);line-height:1.15}
+.stat .v small{font-size:12px;font-weight:400;color:var(--faint);margin-left:3px}
+.bar{height:26px;border-radius:4px;display:flex;overflow:hidden;border:1px solid var(--line)}
+.bar span{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;min-width:0}
+.bar span.lv0{background:#f1f5f9;color:#b6c2d1}
+.bar span.lv1{background:var(--l1)}
+.bar span.lv2{background:var(--l2)}
+.bar span.lv3{background:var(--l3)}
+.bar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.bar-label b{font-weight:600}
+.bar-label em{font-style:normal;color:var(--faint);font-size:12px}
+.bar-item{margin-bottom:16px}
+.hbar{height:20px;background:#eef2f7;border-radius:4px;overflow:hidden;flex:1}
+.hbar i{display:block;height:100%;background:var(--l2);border-radius:4px}
+.rank-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:13px}
+.rank-row .rk{width:26px;flex:none;text-align:right;color:var(--faint);font-size:12px}
+.rank-row .nm{width:82px;text-align:right;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-row .sc{width:62px;color:var(--muted);font-size:12px;text-align:right}
+/* ---------- 分页器 ---------- */
+.pager{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);
+  font-size:12px;color:var(--muted);
+}
+.pager .spacer{flex:1}
+.pager .pg-info{color:var(--muted)}
+.pager .pg-no{color:var(--muted);min-width:46px;text-align:center;font-size:12px}
+.pager .pg-size{display:inline-flex;align-items:center;gap:5px;color:var(--faint);white-space:nowrap}
+.pager .pg-num{
+  width:56px;height:26px;padding:0 4px;border:1px solid var(--line2);border-radius:4px;
+  font-size:12px;font-family:inherit;color:var(--text);background:#fff;text-align:center;outline:none;
+}
+.pager .pg-num:focus{border-color:var(--primary)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.warnbox{
+  background:#fdf7ee;border:1px solid #f0dfc0;border-radius:6px;padding:10px 14px;
+  font-size:13px;color:#8a6320;line-height:1.7;margin-bottom:14px;
+}
+.warnbox b{color:#8a6320}
+.okbox{background:#eff8f3;border:1px solid #cbe8da;border-radius:6px;padding:10px 14px;font-size:13px;color:#1f7a54}
+/* ---------- 弹窗 ---------- */
+.mask{
+  position:fixed;inset:0;background:rgba(23,37,55,.45);display:none;
+  align-items:center;justify-content:center;z-index:100;padding:24px;
+}
+.mask.on{display:flex}
+.modal{
+  background:#fff;border-radius:10px;width:100%;max-width:1080px;max-height:92vh;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.modal-head{padding:15px 20px;border-bottom:1px solid var(--line);font-size:15px;font-weight:700;display:flex;align-items:center}
+.modal-head .spacer{flex:1}
+.modal-body{padding:18px 20px;overflow:auto}
+.modal-foot{padding:13px 20px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;background:#fbfcfe}
+.modal-foot .spacer{flex:1}
+.drop{
+  border:1.5px dashed var(--line2);border-radius:8px;padding:22px;text-align:center;
+  color:var(--muted);font-size:13px;background:#fafcfe;cursor:pointer;line-height:1.9;
+}
+.drop:hover,.drop.over{border-color:var(--primary);background:var(--primary-l);color:var(--primary)}
+.drop b{color:var(--primary)}
+textarea.paste{
+  width:100%;height:110px;resize:vertical;font-family:"Consolas","Courier New",monospace;font-size:12.5px;line-height:1.6;
+}
+.map-grid{display:flex;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;overflow-x:auto}
+.map-col{flex:1;min-width:130px;border-right:1px solid var(--line)}
+.map-col:last-child{border-right:none}
+.map-col .h{padding:5px;background:#f7f9fc;border-bottom:1px solid var(--line)}
+.map-col .h select{width:100%;font-size:12px;padding:4px 6px}
+.map-col .c{padding:5px 9px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid #f2f5f9}
+.step{font-size:12px;color:var(--faint);margin:0 0 8px}
+.step b{color:var(--primary)}
+.hintline{font-size:12px;color:var(--faint);line-height:1.8}
+/* 必输项标记 */
+.req{color:#d9534f;font-style:normal;font-weight:700;margin-left:1px}
+/* 导入模板区 */
+.tplbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tplinfo{margin-top:12px;border:1px solid var(--line);border-radius:6px;background:#fafcfe;overflow:hidden}
+.tplinfo summary{padding:9px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;list-style:none}
+.tplinfo summary::-webkit-details-marker{display:none}
+.tplinfo summary::before{content:'▸ ';color:var(--faint)}
+.tplinfo[open] summary::before{content:'▾ '}
+.tplinfo summary:hover{color:var(--primary);background:#f6f9fd}
+.tplinfo table{width:100%}
+.tplinfo td{padding:6px 14px;font-size:12.5px;border-bottom:1px solid #f0f4f9;vertical-align:top}
+.tplinfo tbody tr:last-child td{border-bottom:none}
+.tplinfo td.fn{font-weight:600;color:#334155;white-space:nowrap;width:110px}
+.tplinfo td.rq{width:66px;white-space:nowrap}
+.tplinfo td.eg{width:130px;color:#7b8ea6;font-family:Consolas,monospace;font-size:12px;white-space:nowrap}
+.tplinfo td.ds{color:var(--muted)}
+/* 技能项管理 */
+.skmgr{width:100%}
+.skmgr td{padding:6px 8px;border-bottom:1px solid #f0f4f9;font-size:13px;vertical-align:middle}
+.skmgr tbody tr:last-child td{border-bottom:none}
+.skmgr input[type=text]{width:100%;padding:5px 8px}
+.skmgr .ord{color:var(--faint);width:30px}
+/* 轻提示 */
+.toast{
+  position:fixed;left:50%;bottom:34px;transform:translateX(-50%);
+  background:#22384f;color:#fff;padding:10px 20px;border-radius:8px;
+  font-size:13px;line-height:1.6;z-index:200;max-width:78vw;text-align:center;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.toast.on{opacity:1}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;background:var(--primary-l);color:var(--primary);font-size:11px;margin-left:6px}
+.mono{font-family:Consolas,monospace;font-size:12px;color:var(--muted)}
+@media print{
+  .topbar,.tabs,.toolbar,.legend .note{display:none!important}
+  .pager{display:none!important}
+  main{padding:0;max-width:none}
+  .panel{display:none!important}
+  .panel.on{display:block!important}
+  .card{border:none}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><h1><span class="dot"></span>人岗匹配矩阵工具</h1><span class="ver">v1.0</span></div>
+  <div class="spacer"></div>
+  <span class="saveflag" id="saveFlag">数据自动保存在本机浏览器</span>
+  <button class="btn sm" id="btnHelp">使用说明</button>
+</div>
+
+<div class="tabs">
+  <div class="tab on" data-tab="people">① 人员名单 <span class="badge" id="tabPeople">0</span></div>
+  <div class="tab" data-tab="score">② 技能评分</div>
+  <div class="tab" data-tab="matrix">③ 匹配矩阵</div>
+  <div class="tab" data-tab="insight">④ 分析洞察</div>
+</div>
+
+<main>
+
+<!-- ============ ① 人员名单 ============ -->
+<section class="panel on" id="panel-people">
+  <div class="toolbar">
+    <button class="btn primary" id="btnOpenImport">导入名单</button>
+    <button class="btn" id="btnTplTop">下载导入模板</button>
+    <button class="btn" id="btnAddPerson">＋ 新增人员</button>
+    <button class="btn" id="btnLoadDemo">加载示例数据</button>
+    <div class="spacer"></div>
+    <button class="btn danger" id="btnClearAll">清空全部数据</button>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      人员名单
+      <span class="sub">表格单元格可直接点击修改</span>
+      <div class="spacer"></div>
+      <span class="mono" id="peopleCount">共 0 人</span>
+    </div>
+    <div class="table-wrap" id="peopleWrap">
+      <table>
+        <thead><tr>
+          <th class="idx">#</th>
+          <th style="width:95px">机构号 <i class="req">★</i></th>
+          <th style="width:150px">机构名称</th>
+          <th style="width:130px">支行</th>
+          <th style="width:100px">柜员号 <i class="req">★</i></th>
+          <th style="width:95px">姓名 <i class="req">★</i></th>
+          <th style="width:130px">岗位</th>
+          <th style="width:52px"></th>
+        </tr></thead>
+        <tbody id="peopleBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ② 技能评分 ============ -->
+<section class="panel" id="panel-score">
+  <div class="toolbar">
+    <input type="search" id="scoreSearch" placeholder="搜索 姓名 / 柜员号 / 岗位" style="width:230px">
+    <select id="scorePostFilter"><option value="">全部岗位</option></select>
+    <select id="scoreBranchFilter"><option value="">全部支行</option></select>
+    <div class="spacer"></div>
+    <button class="btn sm" id="btnManageSkill">⚙ 技能项管理</button>
+    <span class="hintline">批量设置：</span>
+    <select id="bulkSkill"></select>
+    <select id="bulkLevel"></select>
+    <button class="btn sm" id="btnBulkApply">应用到筛选结果</button>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      技能评分录入
+      <span class="sub">单击单元格：未掌握 → 待培养 → 胜任 → 精通 循环 ｜ 右键：降一级 ｜ Shift+单击：清空</span>
+      <div class="spacer"></div>
+      <span class="mono" id="scoreProgress">已评分 0 / 0</span>
+    </div>
+    <div class="table-wrap" id="scoreWrap">
+      <table class="stable" id="scoreTable">
+        <thead id="scoreHead"></thead>
+        <tbody id="scoreBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ③ 匹配矩阵 ============ -->
+<section class="panel" id="panel-matrix">
+  <div class="toolbar">
+    <label class="inline">标题
+      <input type="text" id="mxTitle" value="团队技能匹配矩阵" style="width:230px">
+    </label>
+    <label class="inline">副标题
+      <input type="text" id="mxSubtitle" placeholder="如：富阳农商银行 · 2026年第三季度" style="width:250px">
+    </label>
+  </div>
+  <div class="toolbar">
+    <label class="inline">分组
+      <select id="mxGroup">
+        <option value="">不分组</option>
+        <option value="branch">按支行</option>
+        <option value="orgName">按机构名称</option>
+        <option value="post">按岗位</option>
+      </select>
+    </label>
+    <label class="inline">排序
+      <select id="mxSort">
+        <option value="origin">导入顺序</option>
+        <option value="name">姓名</option>
+        <option value="post">岗位</option>
+        <option value="score">技能总分↓</option>
+        <option value="master">精通项↓</option>
+      </select>
+    </label>
+    <div class="chkrow" style="margin-left:4px">
+      <label class="inline"><input type="checkbox" id="mxShowText" checked>显示等级文字</label>
+      <label class="inline"><input type="checkbox" id="mxShowSub" checked>显示岗位</label>
+      <label class="inline"><input type="checkbox" id="mxShowSum" checked>显示汇总行</label>
+      <label class="inline"><input type="checkbox" id="mxShowLegend" checked>显示图例</label>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn primary" id="btnExportPNG">导出图片 PNG</button>
+    <button class="btn" id="btnPrint">打印 / 存 PDF</button>
+  </div>
+
+  <div class="card">
+    <div class="mx-scroll">
+      <div id="matrixHost"></div>
+    </div>
+    <div class="legend" id="matrixLegend"></div>
+  </div>
+</section>
+
+<!-- ============ ④ 分析洞察 ============ -->
+<section class="panel" id="panel-insight">
+  <div class="toolbar">
+    <label class="inline">支行
+      <select id="insBranchFilter" style="min-width:160px"><option value="">全部支行</option></select>
+    </label>
+    <span class="hintline">切换支行后，下方指标、技能画像、排名与人岗匹配度都会按该支行重算</span>
+    <div class="spacer"></div>
+    <span class="mono" id="insScope">全部 0 人</span>
+    <button class="btn primary" id="btnExportInsight">导出 Excel</button>
+  </div>
+  <div class="stat-row" id="statRow"></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head">团队技能画像<span class="sub">各技能熟练度分布</span></div>
+      <div class="card-body" id="skillBars"></div>
+    </div>
+    <div class="card">
+      <div class="card-head">团队成员技能排名<span class="sub">综合得分 = Σ 熟练度档位</span></div>
+      <div class="card-body" id="memberRank"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      岗位技能标准与人岗匹配度
+      <span class="sub">设定各岗位对各技能项的期望等级，自动测算匹配度（岗位标准为全局设置，不随支行筛选变化）</span>
+      <div class="spacer"></div>
+      <button class="btn sm" id="btnAddPost">＋ 新增岗位标准</button>
+    </div>
+    <div class="card-body">
+      <div id="stdEditor" style="margin-bottom:20px"></div>
+      <div id="matchList"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ 导入弹窗 ============ -->
+<div class="mask" id="importMask">
+  <div class="modal">
+    <div class="modal-head">导入名单<div class="spacer"></div><span class="mono" id="impFileInfo"></span></div>
+    <div class="modal-body">
+      <div class="step"><b>第 1 步</b>　下载模板 → 按模板填写 → 导入数据</div>
+      <div class="tplbar">
+        <button class="btn primary" id="btnTpl">下载导入模板</button>
+        <button class="btn" id="btnTplCsv">下载 CSV 模板</button>
+        <span class="hintline" id="tplHint"></span>
+      </div>
+      <details class="tplinfo" open>
+        <summary>模板字段说明（<i class="req">★</i> 为必输项，共 6 列，列顺序可调整）</summary>
+        <table id="tplTable"><tbody></tbody></table>
+      </details>
+
+      <div class="step" style="margin-top:22px"><b>第 2 步</b>　上传填好的文件，或直接从 Excel 复制数据粘贴到下方文本框</div>
+      <div class="drop" id="dropZone">
+        点击选择文件（支持 <b>.xlsx / .xls / .csv / .txt</b>），也可将文件拖拽到此处<br>
+        <span style="font-size:12px">含表头行时会自动跳过；表头名称相同即可识别，列顺序不限</span>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt" style="display:none">
+      <div style="margin:12px 0 6px;font-size:13px;color:var(--muted)">或粘贴数据（含表头，制表符/逗号分隔均可）：</div>
+      <textarea class="paste" id="pasteArea" placeholder="机构号★&#9;柜员号★&#9;姓名★&#9;机构名称&#9;支行&#9;岗位&#10;1001&#9;88001&#9;张三&#9;富阳农商银行&#9;富春支行&#9;综合柜员"></textarea>
+      <div style="display:flex;gap:9px;align-items:center;margin:10px 0 20px">
+        <button class="btn sm" id="btnParsePaste">解析粘贴内容</button>
+        <span class="hintline">解析后会显示列映射，可手动调整</span>
+      </div>
+
+      <div id="mapSection" style="display:none">
+        <div class="step"><b>第 3 步</b>　确认列对应关系（自动识别，可修改）</div>
+        <div class="map-grid" id="mapGrid"></div>
+        <div id="mapWarn" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="hintline" id="impCount">尚未解析数据</span>
+      <div class="spacer"></div>
+      <label class="inline"><input type="radio" name="impMode" value="append" checked>追加到现有名单</label>
+      <label class="inline" style="margin-left:8px"><input type="radio" name="impMode" value="replace">覆盖现有名单</label>
+      <button class="btn" id="btnImpCancel">取消</button>
+      <button class="btn primary" id="btnImpConfirm" disabled>确认导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 说明弹窗 ============ -->
+<div class="mask" id="helpMask">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-head">使用说明<div class="spacer"></div></div>
+    <div class="modal-body" style="line-height:2;font-size:13.5px">
+      <p><b>① 导入名单</b>　在"人员名单"页点击<b>导入名单</b>。弹窗内先点<b>下载导入模板</b>，模板共 6 列，<i class="req">★</i> 标注的是必输项：</p>
+      <p style="padding-left:16px;color:var(--muted)">必输：<b>机构号、柜员号、姓名</b>（缺少姓名的人员不会被导入；缺机构号/柜员号无法按柜员号去重定位）<br>选填：机构名称、支行、岗位（缺岗位无法测算人岗匹配度，缺支行不影响矩阵生成但无法按支行分组）</p>
+      <p>填好后上传文件，或直接从 Excel 全选复制、粘贴到文本框。系统按表头名称自动识别各列，列顺序可调整；识别不准时可在"列映射"中手动改。</p>
+      <p><b>② 技能评分</b>　在"技能评分"页点击单元格录入熟练度。单击循环切换：<span class="pill" style="background:#f1f5f9;color:#94a3b8">未掌握</span> → <span class="pill" style="background:#a8bcd4;color:#fff">待培养</span> → <span class="pill" style="background:#2f9de8;color:#fff">胜任</span> → <span class="pill" style="background:#1553a8;color:#fff">精通</span>。右键降一级，Shift+单击清空。右上角可用"批量设置"一次性给筛选出的人员赋等级。</p>
+      <p style="padding-left:16px;color:var(--muted)"><b>技能项可自主增减</b>：默认是柜面业务 / 社保业务 / 理财辅助 / 对公业务，点右上角<b>「⚙ 技能项管理」</b>可以新增（如"外汇业务""信贷调查"）、改名、删除或调整列顺序。改名会保留原有评分；删除会一并清除该项的评分（有二次确认）。新增技能项后，记得去「④ 分析洞察」设置各岗位对它的要求等级。</p>
+      <p><b>③ 匹配矩阵</b>　自动生成团队技能匹配矩阵图，可切换分组维度（支行 / 机构 / 岗位）与排序方式，点<b>导出图片 PNG</b> 直接得到可贴进汇报材料的图片。</p>
+      <p><b>④ 分析洞察</b>　查看技能分布、人员排名；在"岗位技能标准"中设定各岗位的期望等级后，会自动算出每个人对其岗位的<b>匹配度</b>并列出未达标技能。标准表末列的<b>「达标 / 总人数」</b>形如 <b>4/5</b>，表示该岗位有 5 人、其中 4 人的全部技能都已达到岗位要求（按上方各技能的期望等级判定）。<br>
+      顶部可按<b>支行</b>筛选：切换后，团队人数/录入完成度等指标、技能画像、成员排名、人岗匹配度都会只统计该支行的人员（右上角显示"该支行 N / 全部 M 人"）。岗位技能标准是全局设置，不随筛选变化；该筛选与「② 技能评分」的筛选相互独立。<br>
+      团队成员技能排名、岗位技能标准、人岗匹配度三张表<b>分页显示</b>（默认每页 15 / 20 / 20 条），分页条右侧可直接改每页条数。切换支行或导入名单后自动回到第 1 页；<b>导出 Excel 与打印都输出全部人员</b>，不受分页影响（打印时会自动展开全部行）。<br>
+      点右上角<b>「导出 Excel」</b>可把当前筛选范围内的分析结果导出为 4 个工作表：<b>数据统计 / 团队技能画像 / 团队成员技能排名 / 岗位技能标准与人岗匹配度</b>。文件名会自动带上支行名与日期（如「团队技能分析-富春支行-20260914.xlsx」）。离线取不到 Excel 组件时会自动改导出 `.xls` 格式（工作表结构一致，Excel 打开若提示格式选"是"即可）。</p>
+      <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+      <p style="color:var(--muted)">数据保存在本机浏览器（localStorage），不上传任何服务器。清除浏览器数据会导致内容丢失，重要数据请及时导出。</p>
+    </div>
+    <div class="modal-foot"><div class="spacer"></div><button class="btn primary" id="btnHelpClose">知道了</button></div>
+  </div>
+</div>
+
+<!-- ============ 技能项管理弹窗 ============ -->
+<div class="mask" id="skillMask">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-head">技能项管理<div class="spacer"></div></div>
+    <div class="modal-body">
+      <div class="step"><b>技能项</b>　可新增 / 改名 / 删除 / 调整顺序，改动会同步到「② 技能评分」「③ 匹配矩阵」「④ 分析洞察」</div>
+      <table class="skmgr" id="skillTable"><tbody></tbody></table>
+      <div style="display:flex;gap:10px;align-items:center;margin:12px 0 2px;flex-wrap:wrap">
+        <button class="btn sm" id="btnSkillAdd">＋ 添加技能项</button>
+        <span class="hintline" id="skillHint"></span>
+      </div>
+      <div class="warnbox" style="margin:14px 0 0">
+        <b>注意事项</b><br>
+        · 改名会保留原有评分（矩阵列名和评分数据都会跟着改）<br>
+        · <b>删除会清除所有人在该技能上的评分，且不可撤销</b>，删除前会再次确认<br>
+        · 新增技能项后，请到「④ 分析洞察 → 岗位技能标准」设置各岗位对该技能的要求等级（默认「未掌握」＝不要求）
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="hintline" id="skillCount"></span>
+      <div class="spacer"></div>
+      <button class="btn" id="btnSkillCancel">取消</button>
+      <button class="btn primary" id="btnSkillSave">应用变更</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   人岗匹配矩阵工具
+   ========================================================= */
+/* 技能项：可在界面「技能项管理」里自主增删改，SKILLS 是运行期的可变列表 */
+const DEFAULT_SKILLS = ['柜面业务','社保业务','理财辅助','对公业务'];
+let SKILLS = DEFAULT_SKILLS.slice();
+const LEVELS = [
+  {v:0, name:'未掌握', cls:'lv0', bg:'#f1f5f9', fg:'#94a3b8'},
+  {v:1, name:'待培养', cls:'lv1', bg:'#a8bcd4', fg:'#ffffff'},
+  {v:2, name:'胜任',   cls:'lv2', bg:'#2f9de8', fg:'#ffffff'},
+  {v:3, name:'精通',   cls:'lv3', bg:'#1553a8', fg:'#ffffff'}
+];
+const LV = v => LEVELS[Math.max(0, Math.min(3, v|0))];
+const maxScore = () => SKILLS.length * 3;                 // 综合得分上限随技能项数量变化
+const scoreCls = sc => { const m = maxScore();            // 得分飘带分级（4 项技能时 = 原 11 / 7 阈值）
+  return sc >= m*0.9 ? 'g' : (sc >= m*0.55 ? 'y' : 'r'); };
+const defaultStdRow = () => { const o = {}; SKILLS.forEach(s=>o[s] = 2); return o; };
+/* 保证每个岗位标准都含当前全部技能项（缺的补 0 = 该岗位不要求此技能） */
+function ensureStdSkills(){
+  Object.keys(state.standards).forEach(po=>{
+    const st = state.standards[po] = state.standards[po] || {};
+    SKILLS.forEach(s=>{ if(typeof st[s] !== 'number') st[s] = 0; });
+    Object.keys(st).forEach(s=>{ if(SKILLS.indexOf(s) < 0) delete st[s]; });
+  });
+}
+
+/* req = 必输项（模板中用 ★ 标注；导入时逐行校验）
+   必输：机构号、柜员号、姓名    选填：机构名称、支行、岗位 */
+const FIELDS = [
+  {k:'orgNo',    label:'机构号',   req:true,  eg:'1001',        desc:'机构编码 / 网点号',                        aliases:['机构号','机构代码','机构编号','机构编码','行号','网点号','机构号码','机构id']},
+  {k:'orgName',  label:'机构名称', req:false, eg:'富阳农商银行', desc:'机构全称',                                aliases:['机构名称','机构全称','行名','单位名称','所属机构名称','机构']},
+  {k:'branch',   label:'支行',     req:false, eg:'富春支行',     desc:'所属支行 / 网点（矩阵可按支行分组）',      aliases:['支行','支行名称','网点','网点名称','所属支行','营业网点','所属网点','分理处']},
+  {k:'tellerNo', label:'柜员号',   req:true,  eg:'88001',       desc:'员工唯一编号，重复导入时按此更新，不会产生重复人员', aliases:['柜员号','柜员编号','员工号','工号','员工编号','柜员代码','员工代码','柜员']},
+  {k:'name',     label:'姓名',     req:true,  eg:'张三',        desc:'员工姓名',                                aliases:['姓名','员工姓名','柜员姓名','名字','人员姓名','人员','客户经理姓名']},
+  {k:'post',     label:'岗位',     req:false, eg:'综合柜员',     desc:'岗位名称；留空则该人员无法测算人岗匹配度', aliases:['岗位','职位','职务','岗位名称','职位名称','职务名称','工作岗位']}
+];
+const REQ_LABEL = k => { const f = FIELDS.find(x=>x.k === k); return f ? f.label : k; };
+const KEY = 'skill_matrix_v1';
+
+const DEFAULT_STD = {
+  '综合柜员':{'柜面业务':3,'社保业务':2,'理财辅助':2,'对公业务':1},
+  '客户经理':{'柜面业务':1,'社保业务':1,'理财辅助':3,'对公业务':3},
+  '大堂经理':{'柜面业务':2,'社保业务':2,'理财辅助':2,'对公业务':1},
+  '运营主管':{'柜面业务':3,'社保业务':3,'理财辅助':2,'对公业务':2}
+};
+
+let state = { people:[], standards:{}, skillList:DEFAULT_SKILLS.slice(), mxTitle:'团队技能匹配矩阵', mxSubtitle:'' };
+let uid = 1;
+const U = () => 'p' + (uid++) + '_' + Math.random().toString(36).slice(2,7);
+
+/* =========================================================
+   分页（团队成员排名 / 岗位技能标准 / 人岗匹配度）
+   步长各自独立，工具栏上的「每页 N」可随时改；不持久化，刷新回到默认值
+   ========================================================= */
+const PAGE_DEF = {rank:15, std:20, match:20};   // 默认步长
+const PAGE_MIN = 1, PAGE_MAX = 500;
+const pageState = {};
+Object.keys(PAGE_DEF).forEach(k => { pageState[k] = {no:1, size:PAGE_DEF[k]}; });
+let printMode = false;          // 打印时临时展开全部行，分页只作用于屏幕
+
+/* 取某张表的当前页；页码越界时自动收敛到最后一页 */
+function pageSlice(key, list){
+  const st = pageState[key];
+  st.size = Math.min(PAGE_MAX, Math.max(1, parseInt(st.size,10) || PAGE_DEF[key]));
+  const size = st.size, total = list.length;
+  const pages = Math.max(1, Math.ceil(total / size));
+  st.no = Math.min(Math.max(1, st.no), pages);
+  if(printMode) return { rows: list.slice(), from:0, to:total, pages:1, no:1, size, total };
+  const from = (st.no - 1) * size;
+  return { rows: list.slice(from, from + size), from, to: Math.min(from + size, total),
+           pages, no: st.no, size, total };
+}
+/* 数据源变化时回到第 1 页 */
+function pageReset(){ Object.keys(pageState).forEach(k => { pageState[k].no = 1; }); }
+
+/* 打印时临时展开全部行：分页只影响屏幕，打印/导出仍是完整数据 */
+function setPrintMode(on){
+  if(printMode === on) return;
+  printMode = on;
+  renderInsight();
+}
+window.addEventListener('beforeprint', ()=>setPrintMode(true));
+window.addEventListener('afterprint',  ()=>setPrintMode(false));
+try{
+  const mq = window.matchMedia('print');
+  const onMq = e => setPrintMode(e.matches);
+  if(mq.addEventListener) mq.addEventListener('change', onMq);
+  else if(mq.addListener) mq.addListener(onMq);
+}catch(e){ /* 不支持则忽略 */ }
+
+/* 分页条：页码导航 + 可修改的「每页 N」。单页时只显示统计与步长设置 */
+function pagerBar(key, p, unit){
+  if(!p.total) return '';
+  const nav = p.pages > 1
+    ? `<button class="btn sm" data-pgk="${key}" data-pg="prev"${p.no <= 1 ? ' disabled' : ''}>上一页</button>
+       <span class="pg-no mono">${p.no} / ${p.pages}</span>
+       <button class="btn sm" data-pgk="${key}" data-pg="next"${p.no >= p.pages ? ' disabled' : ''}>下一页</button>`
+    : '';
+  const range = p.pages > 1 ? `第 ${p.from + 1}-${p.to} ${unit} · ` : '';
+  return `<div class="pager">
+    <span class="pg-info">${range}共 ${p.total} ${unit}</span>
+    <span class="spacer"></span>
+    ${nav}
+    <label class="pg-size">每页 <input type="number" class="pg-num" data-psize="${key}" value="${p.size}" min="${PAGE_MIN}" max="${PAGE_MAX}"> ${unit}</label>
+  </div>`;
+}
+
+/* ---------- 存储 ---------- */
+function save(){
+  try{
+    state.skillList = SKILLS.slice();
+    localStorage.setItem(KEY, JSON.stringify(state));
+    const d = new Date();
+    document.getElementById('saveFlag').textContent =
+      '已保存 ' + d.toLocaleTimeString('zh-CN',{hour12:false});
+  }catch(e){ console.warn(e); }
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return false;
+    const o = JSON.parse(raw);
+    if(o && Array.isArray(o.people)){
+      state.people = o.people.map(p => Object.assign({
+        id:U(), orgNo:'', orgName:'', branch:'', tellerNo:'', name:'', post:'', skills:{}
+      }, p, {skills: p.skills || {}, id: p.id || U()}));
+      state.skillList = (Array.isArray(o.skillList) && o.skillList.length)
+        ? o.skillList.filter(s=>typeof s === 'string' && s.trim()).slice()
+        : DEFAULT_SKILLS.slice();
+      SKILLS = state.skillList.slice();
+      state.standards = o.standards || {};
+      state.mxTitle = o.mxTitle || '团队技能匹配矩阵';
+      state.mxSubtitle = o.mxSubtitle || '';
+      ensureStdSkills();
+      return true;
+    }
+  }catch(e){ console.warn(e); }
+  return false;
+}
+
+/* =========================================================
+   文本解析
+   ========================================================= */
+function detectDelim(text){
+  const line = text.split('\n')[0] || '';
+  const cands = ['\t', ',', ';', '|'];
+  let best = '\t', n = -1;
+  cands.forEach(d=>{
+    const c = line.split(d).length - 1;
+    if(c > n){ n = c; best = d; }
+  });
+  return n <= 0 ? '\t' : best;
+}
+function splitLine(line, delim){
+  if(delim === '\t') return line.split('\t').map(s=>s.replace(/^"|"$/g,'').trim());
+  const out = []; let cur = '', q = false;
+  for(let i=0;i<line.length;i++){
+    const c = line[i];
+    if(q){
+      if(c === '"'){ if(line[i+1] === '"'){ cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else {
+      if(c === '"') q = true;
+      else if(c === delim){ out.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+  }
+  out.push(cur.trim());
+  return out;
+}
+function parseText(text){
+  text = String(text||'').replace(/\r\n?/g,'\n');
+  const lines = text.split('\n').filter(l=>l.trim() !== '');
+  if(!lines.length) return {rows:[], delim:'\t'};
+  const delim = detectDelim(text);
+  return {rows: lines.map(l=>splitLine(l, delim)), delim};
+}
+function normHead(s){
+  // 去掉空白、括号、冒号，以及必输标记 ★ * # 等符号，保证「柜员号★」也能识别
+  return String(s||'').replace(/[\s　()（）\[\]【】:：*＊★☆#＃·]/g,'').toLowerCase();
+}
+/* 识别表头 -> 每个列索引对应的字段 key（''=忽略） */
+function mapHeader(headerRow){
+  const map = headerRow.map(h=>{
+    const n = normHead(h);
+    if(!n) return '';
+    // 1) 精确匹配
+    for(const f of FIELDS){ if(f.aliases.some(a=>normHead(a) === n)) return f.k; }
+    return '';
+  });
+  // 2) 包含匹配（填未识别的）
+  headerRow.forEach((h,i)=>{
+    if(map[i]) return;
+    const n = normHead(h);
+    if(!n) return;
+    let hit = '', len = 0;
+    for(const f of FIELDS){
+      f.aliases.forEach(a=>{
+        const an = normHead(a);
+        if(an && n.indexOf(an) >= 0 && an.length > len){ hit = f.k; len = an.length; }
+      });
+    }
+    map[i] = hit;
+  });
+  // 3) 去重：同一字段只保留第一个
+  const seen = {};
+  for(let i=0;i<map.length;i++){
+    if(!map[i]) continue;
+    if(seen[map[i]]) map[i] = ''; else seen[map[i]] = 1;
+  }
+  return map;
+}
+function headerScore(map){
+  return map.filter(Boolean).length;
+}
+/* 解码文件（自动兼容 UTF-8 / GBK） */
+async function readFileText(file){
+  const buf = await file.arrayBuffer();
+  const head = new Uint8Array(buf.slice(0, Math.min(buf.byteLength, 4096)));
+  // BOM
+  if(head[0] === 0xEF && head[1] === 0xBB && head[2] === 0xBF){
+    return new TextDecoder('utf-8').decode(buf);
+  }
+  try{
+    return new TextDecoder('utf-8', {fatal:true}).decode(buf);
+  }catch(e){
+    try{ return new TextDecoder('gbk').decode(buf); }
+    catch(e2){ return new TextDecoder('utf-8').decode(buf); }
+  }
+}
+
+/* =========================================================
+   工具
+   ========================================================= */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const scoreOf = p => SKILLS.reduce((a,s)=>a + (p.skills[s]||0), 0);
+const PYE = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
+function pyKey(s){
+  const m = {'张':'Z','李':'L','王':'W','刘':'L','陈':'C','杨':'Y','赵':'Z','黄':'H','周':'Z','吴':'W','徐':'X','孙':'S','马':'M','朱':'Z','胡':'H','郭':'G','何':'H','林':'L','高':'G','罗':'L','郑':'Z','梁':'L','谢':'X','宋':'S','唐':'T','许':'X','邓':'D','冯':'F','韩':'H','曹':'C','曾':'Z','彭':'P','萧':'X','蔡':'C','潘':'P','田':'T','董':'D','袁':'Y','于':'Y','余':'Y','叶':'Y','蒋':'J','杜':'D','苏':'S','魏':'W','程':'C','吕':'L','丁':'D','沈':'S','任':'R','姚':'Y','卢':'L','姜':'J','崔':'C','钟':'Z','谭':'T','陆':'L','汪':'W','范':'F','金':'J','石':'S','廖':'L','贾':'J','夏':'X','韦':'W','付':'F','方':'F','白':'B','邹':'Z','孟':'M','熊':'X','秦':'Q','邱':'Q','江':'J','尹':'Y','薛':'X','闫':'Y','段':'D','雷':'L','侯':'H','龙':'L','史':'S','陶':'T','黎':'L','贺':'H','顾':'G','毛':'M','郝':'H','龚':'G','邵':'S','万':'W','钱':'Q','严':'Y','覃':'Q','武':'W','戴':'D','莫':'M','孔':'K','向':'X','汤':'T'};
+  const c = String(s||'').trim()[0] || '';
+  return m[c] || (/[a-zA-Z]/.test(c) ? c.toUpperCase() : 'Z');
+}
+
+/* =========================================================
+   ① 人员名单
+   ========================================================= */
+function renderPeople(){
+  const tb = $('#peopleBody');
+  $('#tabPeople').textContent = state.people.length;
+  $('#peopleCount').textContent = '共 ' + state.people.length + ' 人';
+  if(!state.people.length){
+    tb.innerHTML = '<tr><td colspan="8"><div class="empty">还没有人员数据<br><b>点击上方「导入名单」，或加载示例数据试用</b></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = state.people.map((p,i)=>`
+    <tr data-id="${p.id}">
+      <td class="idx">${i+1}</td>
+      ${FIELDS.map(f=>`<td><input type="text" data-id="${p.id}" data-f="${f.k}" value="${esc(p[f.k])}" placeholder="${f.label}"></td>`).join('')}
+      <td style="text-align:center">
+        <button class="btn ghost sm" data-del="${p.id}" title="删除">✕</button>
+      </td>
+    </tr>`).join('');
+}
+function refreshFilters(){
+  const posts = [...new Set(state.people.map(p=>p.post).filter(Boolean))].sort();
+  const brs   = [...new Set(state.people.map(p=>p.branch).filter(Boolean))].sort();
+  const sp = $('#scorePostFilter'), sb = $('#scoreBranchFilter');
+  const vp = sp.value, vb = sb.value;
+  sp.innerHTML = '<option value="">全部岗位</option>' + posts.map(x=>`<option${x===vp?' selected':''}>${esc(x)}</option>`).join('');
+  sb.innerHTML = '<option value="">全部支行</option>' + brs.map(x=>`<option${x===vb?' selected':''}>${esc(x)}</option>`).join('');
+  // ④ 分析洞察的支行筛选（支行被改名/删除后自动回落到「全部支行」）
+  const ib = $('#insBranchFilter');
+  if(ib){
+    const vib = ib.value;
+    ib.innerHTML = '<option value="">全部支行</option>' + brs.map(x=>`<option${x===vib?' selected':''}>${esc(x)}</option>`).join('');
+  }
+}
+
+/* =========================================================
+   ② 技能评分
+   ========================================================= */
+function filteredForScore(){
+  const q  = $('#scoreSearch').value.trim().toLowerCase();
+  const fp = $('#scorePostFilter').value;
+  const fb = $('#scoreBranchFilter').value;
+  return state.people.filter(p=>{
+    if(fp && p.post !== fp) return false;
+    if(fb && p.branch !== fb) return false;
+    if(q){
+      const hay = [p.name,p.tellerNo,p.post,p.branch,p.orgName,p.orgNo].join(' ').toLowerCase();
+      if(hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+}
+function renderScoreHead(){
+  $('#scoreHead').innerHTML = '<tr>' +
+    '<th class="idx">#</th>' +
+    '<th style="width:92px">姓名</th>' +
+    '<th style="width:120px">岗位</th>' +
+    SKILLS.map(s=>`<th class="skcol" style="width:150px" data-col="${esc(s)}" title="点击整列设置">${esc(s)}</th>`).join('') +
+    '<th style="width:110px">综合得分</th></tr>';
+}
+function renderScore(){
+  const list = filteredForScore();
+  const tb = $('#scoreBody');
+  if(!list.length){
+    tb.innerHTML = `<tr><td colspan="${SKILLS.length + 4}"><div class="empty">没有匹配的人员<br><b>请先导入名单，或调整筛选条件</b></div></td></tr>`;
+  } else {
+    tb.innerHTML = list.map((p,i)=>{
+      const sc = scoreOf(p), m = maxScore(), lv = scoreCls(sc);
+      return `<tr data-id="${p.id}">
+        <td class="idx">${i+1}</td>
+        <td><b style="cursor:pointer" data-goto="${p.id}">${esc(p.name)}</b><div class="mono" style="font-size:11px">${esc(p.tellerNo||'')}</div></td>
+        <td style="color:var(--muted)">${esc(p.post||'-')}</td>
+        ${SKILLS.map(s=>{
+          const v = p.skills[s]||0, L = LV(v);
+          return `<td class="skc"><div class="sc-cell ${L.cls}" data-id="${p.id}" data-skill="${esc(s)}">${v?L.name:'—'}</div></td>`;
+        }).join('')}
+        <td><span class="pill ${lv}">${sc} / ${m}</span></td>
+      </tr>`;
+    }).join('');
+  }
+  const scored = list.filter(p=>SKILLS.some(s=>(p.skills[s]||0)>0)).length;
+  $('#scoreProgress').textContent = `已评分 ${scored} / ${list.length}` + (list.length !== state.people.length ? `（共 ${state.people.length} 人）` : '');
+}
+function paintCell(el, v){
+  const L = LV(v);
+  el.className = 'sc-cell ' + L.cls;
+  el.textContent = v ? L.name : '—';
+}
+function repaintRow(id){
+  const p = state.people.find(x=>x.id === id); if(!p) return;
+  const tr = document.querySelector('#scoreBody tr[data-id="'+id+'"]'); if(!tr) return;
+  SKILLS.forEach(s=>{
+    const c = tr.querySelector('.sc-cell[data-skill="'+CSS.escape(s)+'"]');
+    if(c) paintCell(c, p.skills[s]||0);
+  });
+  const sc = scoreOf(p);
+  const pill = tr.querySelector('.pill');
+  if(pill){ pill.className = 'pill ' + scoreCls(sc); pill.textContent = sc + ' / ' + maxScore(); }
+}
+
+/* =========================================================
+   ③ 匹配矩阵
+   ========================================================= */
+function matrixData(){
+  const gk = $('#mxGroup').value;
+  const sort = $('#mxSort').value;
+  let list = state.people.slice();
+  if(sort === 'name')       list.sort((a,b)=>pyKey(a.name).localeCompare(pyKey(b.name)) || a.name.localeCompare(b.name,'zh'));
+  else if(sort === 'post')  list.sort((a,b)=>(a.post||'').localeCompare(b.post||'','zh'));
+  else if(sort === 'score') list.sort((a,b)=>scoreOf(b) - scoreOf(a));
+  else if(sort === 'master')list.sort((a,b)=>SKILLS.filter(s=>(b.skills[s]||0)===3).length - SKILLS.filter(s=>(a.skills[s]||0)===3).length);
+
+  if(!gk) return [{name:'', rows:list}];
+  const groups = new Map();
+  list.forEach(p=>{
+    const k = p[gk] || '未填写';
+    if(!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(p);
+  });
+  return Array.from(groups.entries()).map(([name,rows])=>({name, rows}));
+}
+function renderMatrix(){
+  const blocks = matrixData();
+  const showText  = $('#mxShowText').checked;
+  const showSub   = $('#mxShowSub').checked;
+  const showSum   = $('#mxShowSum').checked;
+  const showLeg   = $('#mxShowLegend').checked;
+
+  const host = $('#matrixHost');
+  const total = state.people.length;
+
+  // 仅在值不同步时回填，避免打断输入光标
+  const tEl = $('#mxTitle'), sEl = $('#mxSubtitle');
+  if(tEl.value !== state.mxTitle) tEl.value = state.mxTitle;
+  if(sEl.value !== state.mxSubtitle) sEl.value = state.mxSubtitle;
+
+  if(!total){
+    host.innerHTML = '<div class="empty">矩阵为空白——请先在「人员名单」导入数据</div>';
+    $('#matrixLegend').innerHTML = '';
+    return;
+  }
+
+  let html = `<div class="mx-title">${esc(state.mxTitle || '团队技能匹配矩阵')}</div>`;
+  html += `<div class="mx-subtitle">${esc(state.mxSubtitle || '')}${state.mxSubtitle?'　·　':''}共 ${total} 人　·　${SKILLS.length} 项技能　·　生成于 ${new Date().toLocaleDateString('zh-CN')}</div>`;
+  html += '<div class="mx"><div class="mx-headrow"><div class="mx-corner"></div>' +
+          SKILLS.map(s=>`<div class="mx-hc">${esc(s)}</div>`).join('') + '</div>';
+
+  blocks.forEach(b=>{
+    if(b.name) html += `<div class="mx-group">${esc(b.name)}　<span style="font-weight:400;opacity:.75">${b.rows.length} 人</span></div>`;
+    b.rows.forEach(p=>{
+      html += '<div class="mx-row"><div class="mx-name"><div class="n">' + esc(p.name||'—') + '</div>' +
+              (showSub && p.post ? `<div class="s">${esc(p.post)}</div>` : '') + '</div>';
+      SKILLS.forEach(s=>{
+        const v = p.skills[s]||0, L = LV(v);
+        html += `<div class="mx-c ${L.cls}">${showText && v ? esc(L.name) : ''}</div>`;
+      });
+      html += '</div>';
+    });
+  });
+
+  if(showSum){
+    html += '<div class="mx-sum"><div class="mx-name">精通人数</div>' +
+      SKILLS.map(s=>{
+        const n = state.people.filter(p=>(p.skills[s]||0)===3).length;
+        const busy = state.people.filter(p=>(p.skills[s]||0)>=2).length;
+        return `<div class="mx-c">${n} 人精通 / ${busy} 可用</div>`;
+      }).join('') + '</div>';
+  }
+  html += '</div>';
+  host.innerHTML = html;
+
+  $('#matrixLegend').innerHTML = showLeg ? (
+    LEVELS.slice(1).map(L=>`<div class="item"><div class="sw ${L.cls}"></div>${L.name}</div>`).join('') +
+    '<div class="item"><div class="sw lv0"></div>未掌握</div>' +
+    '<div class="note">点击「导出图片 PNG」可获得高清图片，直接用于汇报材料</div>'
+  ) : '';
+}
+
+/* ---------- 导出 PNG ---------- */
+function exportPNG(){
+  if(!state.people.length){ alert('还没有数据，请先导入名单'); return; }
+  const blocks = matrixData();
+  const showText = $('#mxShowText').checked;
+  const showSub  = $('#mxShowSub').checked;
+  const showSum  = $('#mxShowSum').checked;
+  const showLeg  = $('#mxShowLegend').checked;
+
+  const S = 2;                       // 2 倍图，保证清晰
+  const nameW = 150, cellW = 150, cellH = 54, headH = 50, groupH = 36;
+  const padX = 26, padTop = 26, titleH = state.mxSubtitle ? 68 : 46, legendH = showLeg ? 58 : 12;
+
+  let bodyH = headH;
+  blocks.forEach(b=>{ if(b.name) bodyH += groupH; bodyH += b.rows.length * cellH; });
+  if(showSum) bodyH += cellH;
+
+  const W = padX*2 + nameW + SKILLS.length*cellW;
+  const H = padTop + titleH + bodyH + legendH + padTop;
+
+  const cv = document.createElement('canvas');
+  cv.width = W*S; cv.height = H*S;
+  const g = cv.getContext('2d');
+  g.scale(S,S);
+  g.fillStyle = '#ffffff';
+  g.fillRect(0,0,W,H);
+  g.textBaseline = 'middle';
+  const FONT = '"Microsoft YaHei","PingFang SC",sans-serif';
+
+  // 标题
+  g.textAlign = 'left';
+  g.fillStyle = '#1e293b';
+  g.font = 'bold 21px ' + FONT;
+  g.fillText(state.mxTitle || '团队技能匹配矩阵', padX, padTop + 16);
+  if(state.mxSubtitle){
+    g.fillStyle = '#64748b';
+    g.font = '12px ' + FONT;
+    g.fillText(state.mxSubtitle + '　·　共 ' + state.people.length + ' 人　·　生成于 ' + new Date().toLocaleDateString('zh-CN'), padX, padTop + 43);
+  }
+
+  let y = padTop + titleH;
+  const x0 = padX;
+
+  // 表头
+  g.fillStyle = '#22384f';
+  g.fillRect(x0, y, nameW + SKILLS.length*cellW, headH);
+  g.fillStyle = '#ffffff';
+  g.font = 'bold 15px ' + FONT;
+  g.textAlign = 'center';
+  SKILLS.forEach((s,i)=>{
+    const cx = x0 + nameW + i*cellW + cellW/2;
+    g.fillText(s, cx, y + headH/2);
+    // 白色分隔线
+    g.fillStyle = '#ffffff';
+    g.fillRect(x0 + nameW + i*cellW - 1, y, 2, headH);
+    g.fillStyle = '#ffffff';
+  });
+  y += headH;
+
+  const drawRow = (p, isSum) => {
+    // 姓名列
+    g.fillStyle = isSum ? '#e6eef8' : '#eef2f7';
+    g.fillRect(x0, y, nameW, cellH);
+    g.fillStyle = isSum ? '#2b4a6f' : '#20344c';
+    g.textAlign = 'center';
+    if(isSum){
+      g.font = 'bold 12px ' + FONT;
+      g.fillText('精通人数', x0 + nameW/2, y + cellH/2);
+    } else {
+      g.font = (showSub && p.post) ? 'bold 15px ' + FONT : 'bold 15px ' + FONT;
+      const cy = (showSub && p.post) ? y + cellH/2 - 8 : y + cellH/2;
+      g.fillText(p.name || '—', x0 + nameW/2, cy);
+      if(showSub && p.post){
+        g.font = '11px ' + FONT;
+        g.fillStyle = '#7b8ea6';
+        g.fillText(p.post, x0 + nameW/2, y + cellH/2 + 10);
+      }
+    }
+    // 技能格
+    SKILLS.forEach((s,i)=>{
+      const cx = x0 + nameW + i*cellW;
+      if(isSum){
+        const n = state.people.filter(x=>(x.skills[s]||0)===3).length;
+        const busy = state.people.filter(x=>(x.skills[s]||0)>=2).length;
+        g.fillStyle = '#f2f6fb';
+        g.fillRect(cx, y, cellW, cellH);
+        g.fillStyle = '#3d5a7d';
+        g.font = 'bold 12px ' + FONT;
+        g.fillText(n + ' 人精通 / ' + busy + ' 可用', cx + cellW/2, y + cellH/2);
+      } else {
+        const v = p.skills[s]||0, L = LV(v);
+        g.fillStyle = v ? L.bg : '#fbfcfe';
+        g.fillRect(cx, y, cellW, cellH);
+        if(!v){
+          g.strokeStyle = '#eef2f7'; g.lineWidth = 1;
+          g.strokeRect(cx + .5, y + .5, cellW - 1, cellH - 1);
+        } else if(showText){
+          g.fillStyle = '#ffffff';
+          g.font = '14px ' + FONT;
+          g.fillText(L.name, cx + cellW/2, y + cellH/2);
+        }
+      }
+      if(!isSum){
+        g.fillStyle = '#ffffff';
+        g.fillRect(cx - 1, y, 2, cellH);
+      }
+    });
+    y += cellH;
+  };
+
+  blocks.forEach(b=>{
+    if(b.name){
+      g.fillStyle = '#dce7f3';
+      g.fillRect(x0, y, nameW + SKILLS.length*cellW, groupH);
+      g.fillStyle = '#2b4a6f';
+      g.textAlign = 'left';
+      g.font = 'bold 13px ' + FONT;
+      g.fillText(b.name + '　' + b.rows.length + ' 人', x0 + 14, y + groupH/2);
+      y += groupH;
+    }
+    b.rows.forEach(p=>drawRow(p, false));
+  });
+  if(showSum) drawRow(null, true);
+
+  // 图例
+  if(showLeg){
+    let lx = x0;
+    const ly = y + 30;
+    LEVELS.slice(1).forEach(L=>{
+      g.fillStyle = L.bg;
+      g.fillRect(lx, ly - 10, 20, 20);
+      g.fillStyle = '#3d5a7d';
+      g.textAlign = 'left';
+      g.font = '13px ' + FONT;
+      g.fillText(L.name, lx + 27, ly);
+      lx += 27 + g.measureText(L.name).width + 26;
+    });
+    g.fillStyle = '#fbfcfe';
+    g.fillRect(lx, ly - 10, 20, 20);
+    g.strokeStyle = '#cfd8e3'; g.lineWidth = 1;
+    g.strokeRect(lx + .5, ly - 9.5, 19, 19);
+    g.fillStyle = '#3d5a7d';
+    g.font = '13px ' + FONT;
+    g.textAlign = 'left';
+    g.fillText('未掌握', lx + 27, ly);
+  }
+
+  cv.toBlob(b=>{
+    const a = document.createElement('a');
+    const d = new Date();
+    const stamp = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+    a.href = URL.createObjectURL(b);
+    a.download = (state.mxTitle || '团队技能匹配矩阵') + '_' + stamp + '.png';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+  }, 'image/png', 1);
+}
+
+/* =========================================================
+   ④ 分析洞察
+   ========================================================= */
+/* ④ 分析洞察的支行筛选（与②技能评分的筛选相互独立） */
+function insightPeople(){
+  const fb = $('#insBranchFilter').value;
+  return fb ? state.people.filter(p=>p.branch === fb) : state.people.slice();
+}
+function renderInsight(){
+  const all = state.people.length;
+  const fb  = $('#insBranchFilter').value;
+  const people = insightPeople();
+  const n = people.length;
+  const totalCells = n * SKILLS.length;
+  const mastered = people.reduce((a,p)=>a + SKILLS.filter(s=>(p.skills[s]||0)===3).length, 0);
+  const capable  = people.reduce((a,p)=>a + SKILLS.filter(s=>(p.skills[s]||0)>=2).length, 0);
+  const unfilled = people.reduce((a,p)=>a + SKILLS.filter(s=>!(p.skills[s]||0)).length, 0);
+  $('#insScope').textContent = fb ? `${fb} · ${n} / ${all} 人` : `全部 ${all} 人`;
+
+  $('#statRow').innerHTML = n ? `
+    <div class="stat"><div class="k">团队人数</div><div class="v">${n}<small>人</small></div></div>
+    <div class="stat"><div class="k">已录入技能项</div><div class="v">${totalCells - unfilled}<small>/ ${totalCells}</small></div></div>
+    <div class="stat"><div class="k">精通技能项</div><div class="v">${mastered}<small>项</small></div></div>
+    <div class="stat"><div class="k">能独立上岗（胜任+精通）</div><div class="v">${capable}<small>项</small></div></div>
+    <div class="stat"><div class="k">录入完成度</div><div class="v">${totalCells ? Math.round((totalCells-unfilled)/totalCells*100) : 0}<small>%</small></div></div>
+  ` : (all
+      ? `<div class="stat"><div class="k">${esc(fb)}</div><div class="v">0<small>人</small></div></div>`
+      : '<div class="stat"><div class="k">暂无数据</div><div class="v">—</div></div>');
+
+  // 技能分布
+  const emptyTip = all
+    ? `「${esc(fb)}」没有人员<br><b>请切换支行，或选择「全部支行」</b>`
+    : '导入名单并完成评分后，这里会显示团队技能画像';
+  let weak = [];
+  $('#skillBars').innerHTML = n ? SKILLS.map(s=>{
+    const cnt = [0,0,0,0];
+    people.forEach(p=>cnt[p.skills[s]||0]++);
+    const usable = cnt[2] + cnt[3];
+    const rate = Math.round(usable / n * 100);
+    if(cnt[3] === 0) weak.push(s + '（无精通人员）');
+    else if(rate < 40) weak.push(s + '（可上岗率仅 ' + rate + '%）');
+    return `<div class="bar-item">
+      <div class="bar-label"><b>${esc(s)}</b><em>可上岗 ${usable} 人 · ${rate}%${cnt[0]?' · 未掌握 '+cnt[0]+' 人':''}</em></div>
+      <div class="bar">
+        ${cnt[3]?`<span class="lv3" style="flex:${cnt[3]}">精通 ${cnt[3]}</span>`:''}
+        ${cnt[2]?`<span class="lv2" style="flex:${cnt[2]}">胜任 ${cnt[2]}</span>`:''}
+        ${cnt[1]?`<span class="lv1" style="flex:${cnt[1]}">待培养 ${cnt[1]}</span>`:''}
+        ${cnt[0]?`<span class="lv0" style="flex:${cnt[0]}"></span>`:''}
+      </div></div>`;
+  }).join('') : `<div class="empty">${emptyTip}</div>`;
+
+  // 成员排名（分页，默认步长 15，可在分页条上修改）
+  const rankAll = people.slice().sort((a,b)=>scoreOf(b)-scoreOf(a));
+  const max = Math.max(maxScore(), rankAll.length ? scoreOf(rankAll[0]) : 1);   // 空集时 rankAll[0] 为 undefined，不能直接 scoreOf
+  if(n){
+    const pg = pageSlice('rank', rankAll);
+    $('#memberRank').innerHTML = pg.rows.map((p,i)=>{
+      const sc = scoreOf(p);
+      const pct = Math.round(sc / max * 100);
+      return `<div class="rank-row">
+        <span class="rk">${pg.from + i + 1}</span>
+        <span class="nm">${esc(p.name)}</span>
+        <span class="hbar"><i style="width:${pct}%"></i></span>
+        <span class="sc">${sc} / ${maxScore()}</span>
+      </div>`;
+    }).join('') + pagerBar('rank', pg, '人');
+  } else {
+    $('#memberRank').innerHTML = `<div class="empty">${all ? '当前支行没有人员，请切换筛选条件' : '暂无数据'}</div>`;
+  }
+
+  // 岗位标准编辑（全局配置；「人数」列为当前筛选范围内该岗位人数）
+  const posts = [...new Set(state.people.map(p=>p.post).filter(Boolean))].sort();
+  if(!Object.keys(state.standards).length){ state.standards = JSON.parse(JSON.stringify(DEFAULT_STD)); }
+  // 自动补上名单里出现但还没有标准的岗位
+  posts.forEach(po=>{
+    if(!state.standards[po]){
+      const t = Object.keys(state.standards)[0];
+      state.standards[po] = Object.assign({}, state.standards[t] || defaultStdRow());
+    }
+  });
+  ensureStdSkills();   // 技能项有增减时，补齐/清理岗位标准里的技能键
+
+  // 岗位技能标准（分页，默认步长 20，可在分页条上修改）
+  const pgStd = pageSlice('std', Object.keys(state.standards));
+  $('#stdEditor').innerHTML = `
+    <table><thead><tr>
+      <th style="width:150px">岗位</th>
+      ${SKILLS.map(s=>`<th style="text-align:center">${esc(s)}</th>`).join('')}
+      <th style="width:104px" title="达标人数 / 该岗位总人数（达标 = 岗位要求的全部技能均已达到期望等级）">达标 / 总人数${fb?'（筛选内）':''}</th>
+      <th style="width:60px"></th>
+    </tr></thead><tbody>
+    ${pgStd.rows.map(po=>`
+      <tr data-post="${esc(po)}">
+        <td><b>${esc(po)}</b></td>
+        ${SKILLS.map(s=>`<td style="text-align:center">
+          <select class="std-sel" data-post="${esc(po)}" data-skill="${esc(s)}" style="width:92px">
+            ${LEVELS.map(L=>`<option value="${L.v}"${(state.standards[po][s]||0)===L.v?' selected':''}>${L.name}</option>`).join('')}
+          </select>
+        </td>`).join('')}
+        <td style="text-align:center">${(()=>{
+          const f = postFit(people, po);
+          if(!f.total) return '<span style="color:var(--faint)">—</span>';
+          const col = f.hit === f.total ? '#1f8a5b' : (f.hit ? '#c0392b' : '#94a3b8');
+          return `<b style="color:${col}">${f.hit}</b><span style="color:var(--faint)">/</span><span style="color:var(--muted)">${f.total}</span>`;
+        })()}</td>
+        <td style="text-align:center"><button class="btn ghost sm" data-delpost="${esc(po)}">✕</button></td>
+      </tr>`).join('')}
+    </tbody></table>` + pagerBar('std', pgStd, '个岗位');
+
+  // 匹配度
+  if(!n){
+    $('#matchList').innerHTML = `<div class="empty">${all ? '当前支行没有人员，请切换筛选条件' : '暂无人员数据'}</div>`;
+    return;
+  }
+  const rowsAll = people.slice().sort((a,b)=>{
+    const ma = matchRate(a), mb = matchRate(b);
+    return mb.rate - ma.rate;
+  });
+  let warn = weak.length ? `<div class="warnbox"><b>${fb?'本支行':'团队'}技能薄弱环节：</b>` + weak.join('；') + '。建议针对性安排培训或轮岗。</div>' : '';
+  const noStd = people.filter(p=>!p.post).length;
+  if(noStd) warn += '<div class="warnbox">有 <b>' + noStd + '</b> 人未填写岗位，无法测算人岗匹配度。</div>';
+  if(fb) warn += `<div class="okbox">当前仅统计「<b>${esc(fb)}</b>」的 ${n} 人（全部 ${all} 人）。岗位技能标准为全局设置，不随支行筛选变化。</div>`;
+
+  // 人岗匹配度（分页，默认步长 20，可在分页条上修改）
+  const pgMatch = pageSlice('match', rowsAll);
+  $('#matchList').innerHTML = warn + `
+    <table><thead><tr>
+      <th style="width:92px">姓名</th><th style="width:120px">岗位</th>
+      ${SKILLS.map(s=>`<th style="text-align:center">${esc(s)}</th>`).join('')}
+      <th style="width:210px">匹配度</th><th style="width:200px">待补强技能</th>
+    </tr></thead><tbody>
+    ${pgMatch.rows.map(p=>{
+      const m = matchRate(p);
+      const cls = m.rate >= 90 ? 'g' : (m.rate >= 70 ? 'y' : 'r');
+      const gaps = m.gaps.map(t=>`${t.skill}（${LV(t.cur).name}→需${LV(t.need).name}）`);
+      return `<tr>
+        <td><b>${esc(p.name)}</b></td>
+        <td style="color:var(--muted)">${esc(p.post||'-')}</td>
+        ${SKILLS.map(s=>{
+          const cur = p.skills[s]||0;
+          const need = m.std ? (m.std[s]||0) : null;
+          const short = need !== null && cur < need;
+          return `<td class="fit-cell">
+            <span class="fit-wrap"><span class="pill" style="background:${LV(cur).bg};color:${LV(cur).fg}">${cur?LV(cur).name:'—'}</span>${short?'<span class="fit-flag" title="未达岗位要求">▲</span>':''}</span>
+          </td>`;
+        }).join('')}
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="hbar" style="height:14px"><i style="width:${m.rate}%;background:${m.rate>=90?'#1f8a5b':(m.rate>=70?'#2f9de8':'#c0392b')}"></i></span>
+            <span class="pill ${cls}" style="white-space:nowrap">${m.rate}%</span>
+          </div>
+        </td>
+        <td style="font-size:12px;color:${gaps.length?'#c0392b':'#1f8a5b'}">${m.std ? (gaps.length?esc(gaps.join('、')):'全部达标') : '未设标准'}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table>` + pagerBar('match', pgMatch, '人');
+}
+/* 是否满足其岗位的全部技能要求（岗位标准里每一项要求都达到或超过） */
+function meetsStd(p){
+  const std = state.standards[p.post];
+  if(!std) return false;
+  return SKILLS.every(s => (p.skills[s]||0) >= (std[s]||0));
+}
+/* 某岗位在给定人群中的「达标人数 / 总人数」 */
+function postFit(people, po){
+  const g = people.filter(p=>p.post === po);
+  return {hit: g.filter(meetsStd).length, total: g.length};
+}
+function matchRate(p){
+  const std = state.standards[p.post];
+  if(!std) return {rate:0, gaps:[], std:null};
+  let need = 0, got = 0, gaps = [];
+  SKILLS.forEach(s=>{
+    const e = std[s]||0, c = p.skills[s]||0;
+    need += e;
+    got  += Math.min(e, c);
+    if(c < e) gaps.push({skill:s, cur:c, need:e});
+  });
+  return {rate: need ? Math.round(got/need*100) : 0, gaps, std};
+}
+
+/* =========================================================
+   ④ 导出 Excel（按当前支行筛选，四个工作表）
+   ========================================================= */
+function insNow(){
+  const d = new Date(), p = v => String(v).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' +
+         p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function insStamp(){ return insNow().slice(0,10).replace(/-/g,''); }
+function safeName(s){ return String(s||'').replace(/[\\/:*?"<>|]/g,'').trim(); }
+
+/* 组装 4 个工作表的二维数据 */
+function insightSheets(people, fb){
+  if(!Object.keys(state.standards).length){ state.standards = JSON.parse(JSON.stringify(DEFAULT_STD)); }
+  const scope = fb || '全部支行';
+  const n = people.length;
+  const totalCells = n * SKILLS.length;
+  const mastered = people.reduce((a,p)=>a + SKILLS.filter(s=>(p.skills[s]||0)===3).length, 0);
+  const capable  = people.reduce((a,p)=>a + SKILLS.filter(s=>(p.skills[s]||0)>=2).length, 0);
+  const unfilled = people.reduce((a,p)=>a + SKILLS.filter(s=>!(p.skills[s]||0)).length, 0);
+  const pct = totalCells ? Math.round((totalCells-unfilled)/totalCells*100) : 0;
+  const maxS = maxScore();
+  const sheets = [];
+
+  /* ① 数据统计 */
+  const s1 = [
+    ['团队技能分析 · 数据统计'],
+    ['统计范围', scope, '', '导出时间', insNow()],
+    ['技能项数', SKILLS.length + ' 项', '', '技能项', SKILLS.join(' / ')],
+    [],
+    ['指标','数值'],
+    ['团队人数（人）', n],
+    ['已录入技能项', (totalCells-unfilled) + ' / ' + totalCells],
+    ['精通技能项（项）', mastered],
+    ['能独立上岗（胜任+精通）（项）', capable],
+    ['录入完成度', pct + '%'],
+    [],
+    ['说明','「精通 / 能独立上岗」按技能项计数（某人某项达标计 1 项），不是人数。'],
+    ['说明','统计范围取自「④ 分析洞察」页当前选中的支行筛选条件。']
+  ];
+  if(fb) s1.push(['说明','本次导出仅含「' + fb + '」的人员，共 ' + n + ' 人。']);
+  sheets.push({name:'数据统计', aoa:s1, cols:[26,16,4,14,30]});
+
+  /* ② 团队技能画像 */
+  const s2 = [['技能项','精通（人）','胜任（人）','待培养（人）','未掌握（人）','可上岗（人）','可上岗率','薄弱提示']];
+  const tot = [0,0,0,0];
+  SKILLS.forEach(s=>{
+    const c = [0,0,0,0];
+    people.forEach(p=>c[p.skills[s]||0]++);
+    for(let i=0;i<4;i++) tot[i] += c[i];
+    const usable = c[2] + c[3], rate = n ? Math.round(usable/n*100) : 0;
+    const tip = c[3] === 0 ? '无精通人员' : (rate < 40 ? '可上岗率偏低' : '');
+    s2.push([s, c[3], c[2], c[1], c[0], usable, rate + '%', tip]);
+  });
+  s2.push(['合计（按技能项累计）', tot[3], tot[2], tot[1], tot[0], tot[2]+tot[3], '',
+           '合计为各技能项人数之和，非去重人数']);
+  sheets.push({name:'团队技能画像', aoa:s2, cols:[16,12,12,14,14,14,10,26]});
+
+  /* ③ 团队成员技能排名 */
+  const rank = people.slice().sort((a,b)=>scoreOf(b)-scoreOf(a));
+  const s3 = [['排名','姓名','柜员号','支行','岗位', ...SKILLS.map(s=>s + '（熟练度）'), '综合得分','满分','得分率']];
+  rank.forEach((p,i)=>{
+    const sc = scoreOf(p);
+    s3.push([i+1, p.name, p.tellerNo||'', p.branch||'', p.post||'',
+             ...SKILLS.map(s=>LV(p.skills[s]||0).name),
+             sc, maxS, (maxS ? Math.round(sc/maxS*100) : 0) + '%']);
+  });
+  sheets.push({name:'团队成员技能排名', aoa:s3, cols:[6,10,12,14,14, ...SKILLS.map(()=>16), 10,8,9]});
+
+  /* ④ 岗位技能标准与人岗匹配度（一段标准表 + 一段匹配度表） */
+  const s4 = [['一、岗位技能标准（各岗位对各技能项的期望等级）'],
+              ['岗位', ...SKILLS, '达标人数/总人数']];
+  Object.keys(state.standards).forEach(po=>{
+    const f = postFit(people, po);
+    s4.push([po, ...SKILLS.map(s=>LV(state.standards[po][s]||0).name),
+             f.total ? (f.hit + '/' + f.total) : '—']);
+  });
+  s4.push([], ['二、人岗匹配度'], ['姓名','岗位', ...SKILLS, '匹配度','待补强技能']);
+  people.slice().sort((a,b)=>matchRate(b).rate - matchRate(a).rate).forEach(p=>{
+    const m = matchRate(p);
+    const gaps = m.gaps.map(t=>`${t.skill}（${LV(t.cur).name} → 需 ${LV(t.need).name}）`);
+    s4.push([p.name, p.post||'', ...SKILLS.map(s=>LV(p.skills[s]||0).name),
+             m.rate + '%', m.std ? (gaps.length ? gaps.join('；') : '全部达标') : '未设标准']);
+  });
+  s4.push([], ['说明','匹配度 = Σ min(当前等级, 期望等级) ÷ Σ 期望等级。「岗位技能标准」为全局设置，不随支行筛选变化。'],
+           ['说明','「达标人数/总人数」统计当前筛选范围内该岗位的人员：总人数为该岗位人数，达标人数为其中「岗位要求的全部技能均已达到期望等级」的人数。'],
+           ['说明','待补强技能标注为「技能（当前 → 需达标等级）」。']);
+  sheets.push({name:'岗位技能标准与人岗匹配度', aoa:s4,
+               cols:[14, ...SKILLS.map(()=>16), 10, 40]});
+
+  return {sheets, scope};
+}
+
+/* SheetJS 不可用（离线/取不到 CDN）时，退化为 Excel 可打开的多工作表 .xls（HTML 格式） */
+function downloadMultiSheetXls(sheets, fname){
+  const xesc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const xml = sheets.map(s=>`<x:ExcelWorksheet><x:Name>${xesc(s.name)}</x:Name>` +
+    `<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>`).join('');
+  const body = sheets.map(s=>'<table border="1" style="border-collapse:collapse">' +
+    s.aoa.map(r=>'<tr>' + r.map(c=>{
+      const num = typeof c === 'number';
+      const st = num ? "mso-number-format:'General';text-align:right" : "mso-number-format:'\\@'";
+      return `<td style="${st};vertical-align:top">${xesc(c)}</td>`;
+    }).join('') + '</tr>').join('') + '</table>').join('<br style="mso-data-placement:same-cell">');
+  const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">' +
+    '<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>' + xml +
+    '</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>' + body + '</body></html>';
+  const blob = new Blob(['\uFEFF' + html], {type:'application/vnd.ms-excel;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname + '.xls';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+}
+
+function exportInsightExcel(){
+  const fb = $('#insBranchFilter').value;
+  const people = insightPeople();
+  if(!people.length){
+    toast(state.people.length ? '当前支行没有人员，请先切换筛选条件' : '还没有数据，请先导入名单');
+    return;
+  }
+  const {sheets, scope} = insightSheets(people, fb);
+  const fname = safeName('团队技能分析-' + scope + '-' + insStamp());
+  try{
+    if(typeof XLSX === 'undefined') throw new Error('no-xlsx');
+    const wb = XLSX.utils.book_new();
+    sheets.forEach(s=>{
+      const ws = XLSX.utils.aoa_to_sheet(s.aoa);
+      ws['!cols'] = (s.cols || []).map(w=>({wch:w}));
+      XLSX.utils.book_append_sheet(wb, ws, s.name);
+    });
+    XLSX.writeFile(wb, fname + '.xlsx');
+    toast('已导出 ' + sheets.length + ' 个工作表（' + scope + ' · ' + people.length + ' 人）');
+  }catch(e){
+    downloadMultiSheetXls(sheets, fname);
+    toast('离线模式：已导出 .xls（' + scope + ' · ' + people.length + ' 人），Excel 打开时若提示格式，选「是」即可');
+  }
+}
+
+/* =========================================================
+   渲染总入口
+   ========================================================= */
+function renderSkillControls(){
+  const sel = $('#bulkSkill'), cur = sel.value;
+  sel.innerHTML = SKILLS.map(s=>`<option${s===cur?' selected':''}>${esc(s)}</option>`).join('');
+}
+function renderAll(){
+  pageReset();                       // 名单/技能项变化后，三张分页表都回到第 1 页
+  renderPeople();
+  refreshFilters();
+  renderScoreHead();
+  renderScore();
+  renderSkillControls();
+  renderMatrix();
+  renderInsight();
+}
+
+/* =========================================================
+   事件
+   ========================================================= */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    $$('.tab').forEach(x=>x.classList.remove('on'));
+    $$('.panel').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    $('#panel-' + t.dataset.tab).classList.add('on');
+    if(t.dataset.tab === 'insight') renderInsight();   // 重新拉取支行列表
+  };
+});
+
+/* --- 人员表编辑 --- */
+$('#peopleBody').addEventListener('input', e=>{
+  const inp = e.target.closest('input[data-id]'); if(!inp) return;
+  const p = state.people.find(x=>x.id === inp.dataset.id); if(!p) return;
+  p[inp.dataset.f] = inp.value;
+  save();
+});
+$('#peopleBody').addEventListener('change', ()=>{ refreshFilters(); renderMatrix(); renderInsight(); });
+$('#peopleBody').addEventListener('click', e=>{
+  const b = e.target.closest('[data-del]');
+  if(b){
+    const p = state.people.find(x=>x.id === b.dataset.del);
+    if(p && confirm('确定删除「' + (p.name||'该人员') + '」？')) {
+      state.people = state.people.filter(x=>x.id !== b.dataset.del);
+      save(); renderAll();
+    }
+  }
+});
+$('#btnAddPerson').onclick = ()=>{
+  state.people.push({id:U(),orgNo:'',orgName:'',branch:'',tellerNo:'',name:'',post:'',skills:{}});
+  save(); renderAll();
+  const wrap = $('#peopleWrap');
+  wrap.scrollTop = wrap.scrollHeight;
+  const rows = $('#peopleBody').querySelectorAll('tr');
+  const last = rows[rows.length-1];
+  if(last) last.querySelector('input[data-f="name"]').focus();
+};
+$('#btnClearAll').onclick = ()=>{
+  if(!state.people.length) return;
+  if(confirm('确定清空全部人员与技能数据？此操作不可撤销。')){
+    state.people = []; save(); renderAll();
+  }
+};
+
+/* --- 技能评分交互 --- */
+$('#scoreBody').addEventListener('click', e=>{
+  const go = e.target.closest('[data-goto]');
+  if(go){
+    document.querySelector('.tab[data-tab="people"]').click();
+    return;
+  }
+  const cell = e.target.closest('.sc-cell'); if(!cell) return;
+  const p = state.people.find(x=>x.id === cell.dataset.id); if(!p) return;
+  const s = cell.dataset.skill;
+  const cur = p.skills[s]||0;
+  if(e.shiftKey){ p.skills[s] = 0; }
+  else if(e.altKey){ p.skills[s] = 3; }
+  else { p.skills[s] = (cur + 1) % 4; }
+  paintCell(cell, p.skills[s]);
+  repaintRow(p.id);
+  save();
+  renderMatrix();
+  if($('#panel-insight').classList.contains('on')) renderInsight();
+});
+$('#scoreBody').addEventListener('contextmenu', e=>{
+  const cell = e.target.closest('.sc-cell'); if(!cell) return;
+  e.preventDefault();
+  const p = state.people.find(x=>x.id === cell.dataset.id); if(!p) return;
+  const s = cell.dataset.skill, cur = p.skills[s]||0;
+  p.skills[s] = (cur + 3) % 4;
+  paintCell(cell, p.skills[s]);
+  repaintRow(p.id);
+  save(); renderMatrix();
+});
+['scoreSearch','scorePostFilter','scoreBranchFilter'].forEach(id=>{
+  $('#'+id).addEventListener('input', renderScore);
+  $('#'+id).addEventListener('change', renderScore);
+});
+
+/* --- ④ 分析洞察：支行查询条件 --- */
+$('#insBranchFilter').addEventListener('change', ()=>{ pageReset(); renderInsight(); });   // 换支行 → 各表回到第 1 页
+$('#btnExportInsight').addEventListener('click', exportInsightExcel);
+
+/* --- ④ 分析洞察：分页（页码导航 + 修改每页条数）--- */
+$('#panel-insight').addEventListener('click', e=>{
+  const b = e.target.closest('[data-pg]');
+  if(!b || b.disabled) return;
+  const st = pageState[b.dataset.pgk];
+  if(!st) return;
+  st.no += (b.dataset.pg === 'next' ? 1 : -1);     // 越界由 pageSlice 收敛
+  renderInsight();
+});
+$('#panel-insight').addEventListener('change', e=>{
+  const inp = e.target.closest('[data-psize]');
+  if(!inp) return;
+  const st = pageState[inp.dataset.psize];
+  if(!st) return;
+  const v = parseInt(inp.value, 10);
+  if(isNaN(v)){ renderInsight(); return; }         // 非法输入 → 回填当前值
+  st.size = Math.min(PAGE_MAX, Math.max(PAGE_MIN, v));
+  st.no = 1;                                        // 改步长后回到第 1 页
+  renderInsight();
+});
+$('#bulkLevel').innerHTML = LEVELS.map(L=>`<option value="${L.v}">${L.name}</option>`).join('');
+$('#btnBulkApply').onclick = ()=>{
+  const list = filteredForScore();
+  if(!list.length){ alert('当前筛选结果为空'); return; }
+  const s = $('#bulkSkill').value, v = parseInt($('#bulkLevel').value,10);
+  if(!confirm(`将 ${list.length} 人的「${s}」统一设置为「${LV(v).name}」？`)) return;
+  list.forEach(p=>{ p.skills[s] = v; });
+  save(); renderScore(); renderMatrix(); renderInsight();
+};
+$('#scoreTable').addEventListener('click', e=>{
+  const th = e.target.closest('th.skcol'); if(!th) return;   // 表头点击 = 整列设置（表头动态生成，用委托）
+  const s = th.dataset.col;
+  const list = filteredForScore();
+  if(!list.length) return;
+  const v = prompt(`将筛选出的 ${list.length} 人的「${s}」统一设为：\n0=未掌握　1=待培养　2=胜任　3=精通`, '2');
+  if(v === null) return;
+  const n = parseInt(v,10);
+  if(isNaN(n) || n < 0 || n > 3) return;
+  list.forEach(p=>{ p.skills[s] = n; });
+  save(); renderScore(); renderMatrix(); renderInsight();
+});
+
+/* --- 矩阵选项 --- */
+['mxGroup','mxSort','mxShowText','mxShowSub','mxShowSum','mxShowLegend'].forEach(id=>{
+  $('#'+id).addEventListener('change', renderMatrix);
+});
+$('#mxTitle').addEventListener('input', e=>{ state.mxTitle = e.target.value; save(); renderMatrix(); });
+$('#mxSubtitle').addEventListener('input', e=>{ state.mxSubtitle = e.target.value; save(); renderMatrix(); });
+$('#btnExportPNG').onclick = exportPNG;
+$('#btnPrint').onclick = ()=>window.print();
+
+/* --- 岗位标准 --- */
+$('#stdEditor').addEventListener('change', e=>{
+  const sel = e.target.closest('.std-sel'); if(!sel) return;
+  const po = sel.dataset.post, s = sel.dataset.skill;
+  if(!state.standards[po]) state.standards[po] = {};
+  state.standards[po][s] = parseInt(sel.value,10);
+  save(); renderInsight();
+});
+$('#stdEditor').addEventListener('click', e=>{
+  const b = e.target.closest('[data-delpost]'); if(!b) return;
+  const po = b.dataset.delpost;
+  if(confirm('删除岗位标准「' + po + '」？')){ delete state.standards[po]; save(); renderInsight(); }
+});
+$('#btnAddPost').onclick = ()=>{
+  const name = prompt('请输入岗位名称（需与名单中的岗位一致）');
+  if(!name) return;
+  if(!state.standards[name]) state.standards[name] = defaultStdRow();
+  save(); renderInsight();
+};
+
+/* =========================================================
+   技能项管理（新增 / 改名 / 删除 / 排序）
+   ========================================================= */
+const skillMask = $('#skillMask');
+let skillDraft = [];        // [{orig, name}]  orig = 该行原本的技能名，空串代表新增
+
+function openSkillManager(){
+  skillDraft = SKILLS.map(s=>({orig:s, name:s}));
+  renderSkillDraft();
+  skillMask.classList.add('on');
+}
+function renderSkillDraft(){
+  $('#skillTable').innerHTML = '<tbody>' + skillDraft.map((d,i)=>{
+    const used    = d.orig ? state.people.filter(p=>(p.skills[d.orig]||0) > 0).length : 0;
+    const stdUsed = d.orig ? Object.keys(state.standards).filter(po=>(((state.standards[po]||{})[d.orig])||0) > 0).length : 0;
+    return `<tr data-i="${i}">
+      <td class="ord">${i+1}</td>
+      <td><input type="text" class="sk-name" data-i="${i}" value="${esc(d.name)}" placeholder="技能名称，如：外汇业务"></td>
+      <td style="width:120px;color:var(--muted);font-size:12px">${d.orig ? `已评分 ${used} 人` : '<b style="color:#2f9de8">新增</b>'}</td>
+      <td style="width:132px;color:var(--muted);font-size:12px">${d.orig ? `岗位标准 ${stdUsed} 处` : '—'}</td>
+      <td style="width:108px;white-space:nowrap;text-align:right">
+        <button class="btn ghost sm" data-mv="up"   data-i="${i}" title="上移">↑</button>
+        <button class="btn ghost sm" data-mv="down" data-i="${i}" title="下移">↓</button>
+        <button class="btn ghost sm" data-rm="${i}" title="删除这项技能">✕</button>
+      </td>
+    </tr>`;
+  }).join('') + '</tbody>';
+  $('#skillCount').textContent = `共 ${skillDraft.length} 项技能`;
+  $('#skillHint').textContent = skillDraft.length > 8
+    ? '技能项较多时，评分表与匹配矩阵会横向滚动'
+    : '技能项在匹配矩阵里各占一列，建议 4~8 项';
+}
+function toast(msg){
+  let el = document.getElementById('toast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'toast'; el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>el.classList.remove('on'), 2600);
+}
+
+$('#btnManageSkill').onclick = openSkillManager;
+$('#btnSkillCancel').onclick = ()=>{ skillMask.classList.remove('on'); };
+$('#skillMask').addEventListener('click', e=>{ if(e.target === skillMask) skillMask.classList.remove('on'); });
+$('#btnSkillAdd').onclick = ()=>{
+  skillDraft.push({orig:'', name:''});
+  renderSkillDraft();
+  const inp = $('#skillTable').querySelector('input[data-i="' + (skillDraft.length-1) + '"]');
+  if(inp) inp.focus();
+  $('#skillTable').parentElement.scrollTop = 9999;
+};
+$('#skillTable').addEventListener('input', e=>{
+  const inp = e.target.closest('input.sk-name'); if(!inp) return;
+  skillDraft[parseInt(inp.dataset.i,10)].name = inp.value;   // 只改草稿，不重渲染，保住输入光标
+});
+$('#skillTable').addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && e.target.closest('input.sk-name')){ e.preventDefault(); $('#btnSkillAdd').click(); }
+});
+$('#skillTable').addEventListener('click', e=>{
+  const rm = e.target.closest('[data-rm]');
+  if(rm){ skillDraft.splice(parseInt(rm.dataset.rm,10),1); renderSkillDraft(); return; }
+  const mv = e.target.closest('[data-mv]');
+  if(mv){
+    const i = parseInt(mv.dataset.i,10);
+    const j = mv.dataset.mv === 'up' ? i-1 : i+1;
+    if(j < 0 || j >= skillDraft.length) return;
+    const t = skillDraft[i]; skillDraft[i] = skillDraft[j]; skillDraft[j] = t;
+    renderSkillDraft();
+  }
+});
+
+$('#btnSkillSave').onclick = ()=>{
+  const final = skillDraft.map(d=>({orig:d.orig, name:d.name.trim()}));
+  if(!final.length){ alert('至少保留一项技能。'); return; }
+  if(final.some(f=>!f.name)){ alert('技能名称不能为空：请填写该行，或点 ✕ 删除它。'); return; }
+  const dup = final.map(f=>f.name).filter((v,i,a)=>a.indexOf(v) !== i);
+  if(dup.length){ alert('技能名称重复：' + [...new Set(dup)].join('、') + '，请修改后再应用。'); return; }
+
+  const kept    = new Set(final.map(f=>f.name));
+  const removed = SKILLS.filter(s=>!kept.has(s));
+  const renamed = final.filter(f=>f.orig && f.orig !== f.name);
+  const added   = final.filter(f=>!f.orig);
+
+  if(removed.length){
+    const affected = state.people.filter(p=>removed.some(s=>(p.skills[s]||0) > 0)).length;
+    let msg = '将删除技能项：' + removed.join('、') + '。\n';
+    if(affected) msg += `\n有 ${affected} 人在这些技能上已录入评分，将一并清除。\n`;
+    msg += '\n此操作不可撤销，确定继续？';
+    if(!confirm(msg)) return;
+  }
+
+  // 1) 改名：个人评分与岗位标准的键同步迁移，数据不丢
+  renamed.forEach(({orig, name})=>{
+    state.people.forEach(p=>{
+      if(Object.prototype.hasOwnProperty.call(p.skills, orig)){ p.skills[name] = p.skills[orig]; delete p.skills[orig]; }
+    });
+    Object.keys(state.standards).forEach(po=>{
+      const st = state.standards[po];
+      if(st && Object.prototype.hasOwnProperty.call(st, orig)){ st[name] = st[orig]; delete st[orig]; }
+    });
+  });
+  // 2) 删除：连同评分与岗位标准里的键一起清掉
+  removed.forEach(s=>{
+    state.people.forEach(p=>{ delete p.skills[s]; });
+    Object.keys(state.standards).forEach(po=>{ if(state.standards[po]) delete state.standards[po][s]; });
+  });
+  // 3) 生效
+  SKILLS = final.map(f=>f.name);
+  state.skillList = SKILLS.slice();
+  ensureStdSkills();          // 新增技能：岗位标准补 0（＝该岗位不要求），由用户在 ④ 里按需调整
+  save(); renderAll();
+  skillMask.classList.remove('on');
+
+  const parts = [];
+  if(added.length)   parts.push('新增 ' + added.map(a=>a.name).join('、'));
+  if(renamed.length) parts.push('改名 ' + renamed.map(r=>r.orig + ' → ' + r.name).join('、'));
+  if(removed.length) parts.push('删除 ' + removed.join('、'));
+  toast(parts.length
+    ? '技能项已更新：' + parts.join('；') + (added.length ? '（请在「④ 分析洞察」设置新技能项的岗位要求）' : '')
+    : '技能项未发生变化');
+};
+
+/* =========================================================
+   导入流程
+   ========================================================= */
+let impRows = [], impMap = [], impHasHead = false;
+const importMask = $('#importMask');
+
+/* ---------- 导入模板（表头 / 必输项标注） ---------- */
+const TPL_NAME = '人员名单导入模板';
+// 模板列顺序：必输项（机构号 / 柜员号 / 姓名）在前，便于填写时一眼看到
+const TPL_ORDER = ['orgNo','tellerNo','name','orgName','branch','post'];
+const tplFields  = () => TPL_ORDER.map(k => FIELDS.find(f => f.k === k));
+const tplHeaders = () => tplFields().map(f => f.label + (f.req ? '★' : ''));
+
+function renderTplInfo(){
+  $('#tplTable').innerHTML = '<tbody>' + tplFields().map(f=>`<tr>
+      <td class="fn">${esc(f.label)}${f.req?' <i class="req">★</i>':''}</td>
+      <td class="rq">${f.req?'<i class="req">必输</i>':'<span style="color:#94a3b8">选填</span>'}</td>
+      <td class="ds">${esc(f.desc)}</td>
+      <td class="eg">${esc(f.eg)}</td>
+    </tr>`).join('') + '</tbody>';
+  $('#tplHint').innerHTML = 'Excel 模板含「人员名单」「填写说明」两个工作表，标 <i class="req">★</i> 的为必输项';
+}
+
+function downloadCsvTemplate(){
+  const csv = '\uFEFF' + tplHeaders().join(',') + '\r\n';
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = TPL_NAME + '.csv';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+}
+
+function downloadXlsxTemplate(){
+  const wb = XLSX.utils.book_new();
+
+  // 工作表 1：人员名单（只有表头，用户直接往下填）
+  const ws1 = XLSX.utils.aoa_to_sheet([tplHeaders()]);
+  ws1['!cols'] = tplFields().map(f => ({wch: f.k === 'orgName' ? 18 : (f.k === 'branch' ? 14 : 12)}));
+  XLSX.utils.book_append_sheet(wb, ws1, '人员名单');
+
+  // 工作表 2：填写说明
+  const rows = [
+    ['字段','是否必输','填写说明','示例'],
+    ...tplFields().map(f => [f.label, f.req ? '★ 必输' : '选填', f.desc, f.eg]),
+    ['','','',''],
+    ['导入提示','','表头名称与模板保持一致即可，列顺序可以调整，系统按表头名称自动识别。',''],
+    ['导入提示','','同一柜员号重复导入时更新原有记录，不会产生重复人员。',''],
+    ['导入提示','','必输项为 机构号 / 柜员号 / 姓名。「姓名」为空的行会被跳过，机构号、柜员号留空的行仍会导入，导入完成后会提示补填。',''],
+    ['导入提示','','人员导入完成后，请到工具「② 技能评分」页逐项录入技能熟练度。','']
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(rows);
+  ws2['!cols'] = [{wch:12},{wch:10},{wch:58},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, ws2, '填写说明');
+
+  XLSX.writeFile(wb, TPL_NAME + '.xlsx');
+}
+
+function onDownloadTpl(){
+  if(typeof XLSX === 'undefined'){
+    if(confirm('当前未加载 Excel 生成组件（可能是离线环境）。\n是否改下载 CSV 格式模板？CSV 可直接用 Excel 打开填写。')){
+      downloadCsvTemplate();
+    }
+    return;
+  }
+  try{ downloadXlsxTemplate(); }
+  catch(e){ alert('生成模板失败：' + e.message + '\n可改用「下载 CSV 模板」。'); }
+}
+$('#btnTpl').onclick    = onDownloadTpl;
+$('#btnTplTop').onclick = onDownloadTpl;
+$('#btnTplCsv').onclick = ()=>downloadCsvTemplate();
+
+$('#btnOpenImport').onclick = ()=>{ importMask.classList.add('on'); };
+$('#btnImpCancel').onclick = ()=>{ importMask.classList.remove('on'); };
+importMask.addEventListener('click', e=>{ if(e.target === importMask) importMask.classList.remove('on'); });
+$('#dropZone').onclick = ()=>$('#fileInput').click();
+$('#dropZone').addEventListener('dragover', e=>{ e.preventDefault(); $('#dropZone').classList.add('over'); });
+$('#dropZone').addEventListener('dragleave', ()=>$('#dropZone').classList.remove('over'));
+$('#dropZone').addEventListener('drop', async e=>{
+  e.preventDefault(); $('#dropZone').classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if(f) await handleFile(f);
+});
+$('#fileInput').addEventListener('change', async e=>{
+  const f = e.target.files[0];
+  if(f) await handleFile(f);
+  e.target.value = '';
+});
+$('#btnParsePaste').onclick = ()=>{
+  const t = $('#pasteArea').value;
+  if(!t.trim()){ alert('请先粘贴数据'); return; }
+  const r = parseText(t);
+  setImport(r.rows, '粘贴内容');
+};
+
+async function handleFile(file){
+  const ext = (file.name.split('.').pop()||'').toLowerCase();
+  $('#impFileInfo').textContent = file.name + ' · ' + (file.size/1024).toFixed(1) + ' KB';
+  try{
+    let rows = [];
+    if(ext === 'xlsx' || ext === 'xls'){
+      if(typeof XLSX === 'undefined'){
+        alert('当前浏览器未加载 Excel 解析组件（可能断网）。\n请改用：① 直接在 Excel 里全选复制，粘贴到下方文本框；② 另存为 CSV 后导入。');
+        return;
+      }
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+    } else {
+      const text = await readFileText(file);
+      rows = parseText(text).rows;
+    }
+    rows = rows.filter(r=>r.some(c=>String(c).trim() !== ''));
+    if(!rows.length){ alert('文件里没有读到数据'); return; }
+    setImport(rows, file.name);
+  }catch(err){
+    console.error(err);
+    alert('读取文件失败：' + err.message);
+  }
+}
+
+function setImport(rows, label){
+  if(!rows.length){ alert('没有解析到数据'); return; }
+  // 判断首行是不是表头
+  // 以「姓名」列作为表头锚点最可靠：真实表头必有姓名列，数据行不会出现"姓名"二字
+  // 兜底：识别出 4 个以上字段也视为表头（防止表头写法特殊）
+  const m0 = mapHeader(rows[0]);
+  const useHead = m0.indexOf('name') >= 0 || headerScore(m0) >= 4;
+  impHasHead = useHead;
+  impRows = useHead ? rows.slice(1) : rows;
+  // 无表头时按「模板列顺序」解析（柜员号 / 姓名 / 岗位 / 机构号 / 机构名称 / 支行）
+  impMap  = useHead ? m0 : TPL_ORDER.slice();
+
+  if(!impRows.length){
+    $('#mapGrid').innerHTML = '';
+    $('#mapSection').style.display = 'block';
+    $('#mapWarn').innerHTML = '<div class="warnbox">只读取到表头，没有数据行。请在模板中填写人员数据后再导入。</div>';
+    $('#impCount').textContent = '0 行数据';
+    $('#btnImpConfirm').disabled = true;
+    return;
+  }
+
+  // 渲染映射
+  const cols = Math.max(...rows.map(r=>r.length));
+  let html = '';
+  for(let i=0;i<cols;i++){
+    const cur = impMap[i] || '';
+    html += `<div class="map-col">
+      <div class="h"><select data-col="${i}">
+        <option value="">— 忽略此列 —</option>
+        ${tplFields().map(f=>`<option value="${f.k}"${cur===f.k?' selected':''}>${f.label}${f.req?' ★':''}</option>`).join('')}
+      </select></div>`;
+    for(let r=0;r<Math.min(impRows.length, 5);r++){
+      html += `<div class="c">${esc(impRows[r][i]||'')}</div>`;
+    }
+    html += '</div>';
+  }
+  $('#mapGrid').innerHTML = html;
+  $('#mapSection').style.display = 'block';
+
+  const hasName  = impMap.indexOf('name') >= 0;
+  const missCols = ['orgNo','tellerNo','name'].filter(k => impMap.indexOf(k) < 0);
+  const modeTxt  = state.people.length
+    ? ('导入方式：' + (document.querySelector('input[name=impMode]:checked').value === 'append' ? '追加到现有名单' : '覆盖现有名单') + '。')
+    : '';
+  const srcTxt = impHasHead
+    ? '已检测到表头行并自动跳过。'
+    : '未检测到表头，按模板列序解析（' + tplHeaders().join(' / ') + '），如列序不同请在上方下拉框中调整。';
+  $('#mapWarn').innerHTML = !hasName
+    ? '<div class="warnbox"><b>缺少必输项「姓名」列。</b>请在上方下拉框中手动指定对应的列，否则无法导入。</div>'
+    : (missCols.length
+        ? `<div class="warnbox">必输项 <b>${missCols.map(REQ_LABEL).join('、')}</b> 未匹配到对应列。可以继续导入，但相关人员会缺少这些信息。${modeTxt}</div>`
+        : `<div class="okbox">必输项「机构号 / 柜员号 / 姓名」已全部匹配。${srcTxt}${modeTxt}</div>`);
+  $('#impCount').textContent = `解析到 ${impRows.length} 行数据 · ${cols} 列`;
+  $('#btnImpConfirm').disabled = !hasName;
+  $('#mapSection').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+$('#mapGrid').addEventListener('change', e=>{
+  const sel = e.target.closest('select[data-col]'); if(!sel) return;
+  const i = parseInt(sel.dataset.col,10);
+  const val = sel.value;
+  // 同一字段只能映射一次
+  if(val) impMap = impMap.map((x,j)=> (x === val && j !== i) ? '' : x);
+  impMap[i] = val;
+  // 同步其他下拉
+  $$('#mapGrid select').forEach(s=>{
+    const j = parseInt(s.dataset.col,10);
+    if(j !== i) s.value = impMap[j] || '';
+  });
+  const hasName = impMap.indexOf('name') >= 0;
+  $('#mapWarn').innerHTML = hasName ? '<div class="okbox">列映射已确认，可以导入。</div>'
+                                    : '<div class="warnbox">未识别到「姓名」列，请手动指定，否则无法导入。</div>';
+  $('#btnImpConfirm').disabled = !hasName;
+});
+document.querySelectorAll('input[name=impMode]').forEach(r=>{
+  r.addEventListener('change', ()=>{
+    if(impMap.indexOf('name') >= 0) return;
+  });
+});
+
+$('#btnImpConfirm').onclick = ()=>{
+  const mode = document.querySelector('input[name=impMode]:checked').value;
+  const list = [];
+  const miss = {orgNo:0, tellerNo:0, post:0};
+  let skipped = 0;
+  impRows.forEach(r=>{
+    const o = {};
+    FIELDS.forEach(f=>o[f.k] = '');
+    impMap.forEach((k,i)=>{ if(k) o[k] = String(r[i]==null?'':r[i]).trim(); });
+    if(!o.name){ skipped++; return; }        // 姓名必输，缺失的行无法识别人员
+    if(!o.orgNo) miss.orgNo++;
+    if(!o.tellerNo) miss.tellerNo++;
+    if(!o.post) miss.post++;
+    o.skills = {};
+    o.id = U();
+    list.push(o);
+  });
+  if(!list.length){
+    alert('没有有效数据。\n导入要求：必须映射「姓名」列，且每一行都要填写姓名。');
+    return;
+  }
+
+  let added = 0, updated = 0;
+  if(mode === 'replace'){
+    state.people = list;
+    added = list.length;
+  } else {
+    list.forEach(np=>{
+      const old = np.tellerNo
+        ? state.people.find(p=>p.tellerNo && p.tellerNo === np.tellerNo)
+        : state.people.find(p=>p.name === np.name && (p.branch||'') === (np.branch||''));
+      if(old){
+        ['orgNo','orgName','branch','tellerNo','name','post'].forEach(k=>{ if(np[k]) old[k] = np[k]; });
+        updated++;
+      } else {
+        state.people.push(np);
+        added++;
+      }
+    });
+  }
+  save(); renderAll();
+  importMask.classList.remove('on');
+  $('#pasteArea').value = '';
+  $('#mapSection').style.display = 'none';
+  $('#btnImpConfirm').disabled = true;
+  $('#impCount').textContent = '尚未解析数据';
+  $('#impFileInfo').textContent = '';
+
+  const warn = [], note = [];
+  if(skipped)        warn.push(`${skipped} 行因「姓名」为空被跳过`);
+  if(miss.orgNo)     warn.push(`${miss.orgNo} 人缺「机构号」`);
+  if(miss.tellerNo)  warn.push(`${miss.tellerNo} 人缺「柜员号」，无法按柜员号去重`);
+  if(miss.post)      note.push(`${miss.post} 人未填「岗位」，无法测算人岗匹配度`);
+  let msg = `导入完成：新增 ${added} 人${updated?`，更新 ${updated} 人`:''}。`;
+  msg += warn.length ? ('\n\n必输项提醒（机构号 / 柜员号 / 姓名）：\n· ' + warn.join('\n· ')) : '\n\n必输项（机构号 / 柜员号 / 姓名）校验通过。';
+  if(note.length) msg += '\n\n提示：\n· ' + note.join('\n· ');
+  msg += '\n\n接下来请到「② 技能评分」录入熟练度。';
+  alert(msg);
+};
+
+/* =========================================================
+   示例数据
+   ========================================================= */
+$('#btnLoadDemo').onclick = ()=>{
+  if(state.people.length && !confirm('将覆盖当前名单，确定加载示例数据？')) return;
+  const demo = [
+    ['1001','富阳农商银行','富春支行','88001','张三','综合柜员',  {柜面业务:3,社保业务:2,理财辅助:2,对公业务:1}],
+    ['1001','富阳农商银行','富春支行','88002','李四','综合柜员',  {柜面业务:2,社保业务:3,理财辅助:2,对公业务:2}],
+    ['1001','富阳农商银行','富春支行','88003','王五','客户经理',  {柜面业务:1,社保业务:1,理财辅助:3,对公业务:3}],
+    ['1001','富阳农商银行','富春支行','88004','赵敏','客户经理',  {柜面业务:2,社保业务:1,理财辅助:2,对公业务:3}],
+    ['1001','富阳农商银行','富春支行','88005','钱伟','大堂经理',  {柜面业务:2,社保业务:2,理财辅助:1,对公业务:1}],
+    ['1002','富阳农商银行','鹿山支行','88006','孙丽','综合柜员',  {柜面业务:3,社保业务:2,理财辅助:1,对公业务:1}],
+    ['1002','富阳农商银行','鹿山支行','88007','周强','客户经理',  {柜面业务:1,社保业务:2,理财辅助:3,对公业务:2}],
+    ['1002','富阳农商银行','鹿山支行','88008','吴静','运营主管',  {柜面业务:3,社保业务:3,理财辅助:2,对公业务:2}],
+    ['1002','富阳农商银行','鹿山支行','88009','郑浩','综合柜员',  {柜面业务:2,社保业务:1,理财辅助:1,对公业务:1}],
+    ['1003','富阳农商银行','银湖支行','88010','冯雪','综合柜员',  {柜面业务:3,社保业务:3,理财辅助:2,对公业务:1}],
+    ['1003','富阳农商银行','银湖支行','88011','陈刚','客户经理',  {柜面业务:1,社保业务:2,理财辅助:3,对公业务:3}],
+    ['1003','富阳农商银行','银湖支行','88012','褚婷','大堂经理',  {柜面业务:2,社保业务:2,理财辅助:2,对公业务:2}]
+  ].map(d=>({id:U(),orgNo:d[0],orgName:d[1],branch:d[2],tellerNo:d[3],name:d[4],post:d[5],skills:d[6]}));
+  state.people = demo;
+  state.standards = JSON.parse(JSON.stringify(DEFAULT_STD));
+  state.mxTitle = '团队技能匹配矩阵';
+  state.mxSubtitle = '富阳农商银行 · 示例数据';
+  save(); renderAll();
+};
+
+/* =========================================================
+   启动
+   ========================================================= */
+(function init(){
+  const has = load();
+  if(!has){
+    // 首次打开：空名单 + 默认技能项 + 默认岗位标准。不自动弹窗，由用户自行导入（或点「加载示例数据」）
+    state.people = [];
+    state.skillList = DEFAULT_SKILLS.slice();
+    SKILLS = state.skillList.slice();
+    state.standards = JSON.parse(JSON.stringify(DEFAULT_STD));
+    ensureStdSkills();
+  }
+  renderAll();
+  renderTplInfo();
+})();
+</script>
+</body>
+</html>

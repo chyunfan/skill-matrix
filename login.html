@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>登录 · 人岗匹配矩阵工具</title>
+<style>
+:root{
+  --bg:#f4f6f9; --card:#ffffff; --line:#e3e8ef; --line2:#cfd8e3;
+  --text:#1e293b; --muted:#64748b; --faint:#94a3b8;
+  --primary:#1c5fb0; --primary-d:#154c8f; --primary-l:#e8f1fb;
+  --l3:#1553a8; --l2:#2f9de8; --l1:#a8bcd4; --l0:#f1f5f9;
+  --danger:#c0392b; --ok:#1f8a5b; --warn:#b7791f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font:14px/1.55 "Microsoft YaHei","PingFang SC","Hiragino Sans GB","Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.wrap{width:100%;max-width:430px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:18px;justify-content:center}
+.brand .dot{width:9px;height:9px;border-radius:2px;background:var(--l3)}
+.brand h1{font-size:18px;font-weight:700;letter-spacing:.5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:26px 24px}
+.card h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.card .sub{color:var(--muted);font-size:12.5px;margin-bottom:18px}
+label{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px}
+label:first-of-type{margin-top:0}
+input[type=text],input[type=password]{
+  width:100%;height:40px;padding:0 12px;border:1px solid var(--line2);border-radius:4px;
+  font-size:14px;color:var(--text);background:#fff;outline:none;font-family:inherit;
+}
+input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
+.btn{
+  width:100%;height:42px;margin-top:20px;border:0;border-radius:4px;cursor:pointer;
+  background:var(--primary);color:#fff;font-size:15px;font-weight:600;font-family:inherit;
+}
+.btn:hover{background:var(--primary-d)}
+.btn:disabled{background:var(--l1);cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--primary);border:1px solid var(--line2)}
+.btn.ghost:hover{background:var(--primary-l)}
+.msg{margin-top:14px;font-size:13px;padding:9px 12px;border-radius:4px;display:none}
+.msg.on{display:block}
+.msg.err{background:#fdf1f0;color:var(--danger);border:1px solid #f3d3cf}
+.msg.ok{background:#eef8f3;color:var(--ok);border:1px solid #cfe8dc}
+.msg.info{background:var(--primary-l);color:var(--primary-d);border:1px solid #cfe0f4}
+.rules{list-style:none;margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px}
+.rules li{font-size:12.5px;color:var(--muted);padding:3px 0 3px 22px;position:relative}
+.rules li::before{content:"○";position:absolute;left:4px;color:var(--faint)}
+.rules li.pass{color:var(--ok)}
+.rules li.pass::before{content:"✓";color:var(--ok);font-weight:700}
+.info-grid{margin-top:6px;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.info-grid div{display:flex;font-size:13px;border-bottom:1px solid var(--line)}
+.info-grid div:last-child{border-bottom:0}
+.info-grid .k{width:104px;flex:none;padding:9px 12px;background:#f8fafc;color:var(--muted)}
+.info-grid .v{padding:9px 12px;flex:1;word-break:break-all}
+.tags{margin-top:16px}
+.tag{display:inline-block;font-size:12px;padding:3px 9px;border-radius:3px;margin:0 6px 6px 0;
+  background:var(--primary-l);color:var(--primary-d);border:1px solid #cfe0f4}
+.tag.g{background:#eef8f3;color:var(--ok);border-color:#cfe8dc}
+.tag.o{background:#fdf6ec;color:var(--warn);border-color:#f0e0c4}
+.hint{margin-top:16px;font-size:12px;color:var(--faint);line-height:1.7}
+.hint code{background:var(--l0);padding:1px 5px;border-radius:3px;font-size:11.5px}
+.warnbox{margin-top:14px;padding:11px 13px;background:#fdf6ec;border:1px solid #f0e0c4;
+  border-radius:4px;font-size:12.5px;color:#8a6420;line-height:1.7}
+.warnbox code{background:#fff6e5;padding:1px 5px;border-radius:3px;font-size:11.5px}
+.view{display:none}
+.view.on{display:block}
+.foot{text-align:center;margin-top:16px;font-size:11.5px;color:var(--faint)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="dot"></span><h1>人岗匹配矩阵工具</h1></div>
+
+  <!-- ============ 服务端未就绪 ============ -->
+  <div class="card view" id="vSetup">
+    <h2>服务端尚未就绪</h2>
+    <p class="sub" id="setupSub">浏览器没能连上后端接口</p>
+    <div class="warnbox" id="setupBox">
+      请在 Vercel 项目的 <code>Settings → Environment Variables</code> 里配置：<br>
+      1. <code>SUPABASE_URL</code> —— Supabase 项目地址<br>
+      2. <code>SUPABASE_SERVICE_KEY</code> —— service_role key<br>
+      3. <code>AUTH_SECRET</code> —— 登录令牌签名密钥（一串随机字符）<br>
+      4. 保存后 <code>Redeploy</code> 重新部署<br>
+      5. 确认已按《部署步骤.md》跑过 <code>schema.sql</code> 和 <code>make-admin.js</code>
+    </div>
+    <div class="msg err on" id="setupMsg" style="margin-top:14px"></div>
+    <button class="btn ghost" id="btnRetry">重新检测</button>
+  </div>
+
+  <!-- ============ ① 登录 ============ -->
+  <div class="card view" id="vLogin">
+    <h2>账号登录</h2>
+    <p class="sub">账号为本人柜员号，初始密码为柜员号，首次登录需修改密码</p>
+    <label for="teller">柜员号</label>
+    <input type="text" id="teller" autocomplete="username" inputmode="numeric" placeholder="请输入柜员号">
+    <label for="pwd">密码</label>
+    <input type="password" id="pwd" autocomplete="current-password" placeholder="请输入密码">
+    <button class="btn" id="btnLogin">登 录</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <!-- ============ ② 强制改密 ============ -->
+  <div class="card view" id="vPwd">
+    <h2>首次登录 · 请修改密码</h2>
+    <p class="sub" id="pwdSub">为保障账号安全，必须修改初始密码后才能使用系统</p>
+    <label for="np1">新密码</label>
+    <input type="password" id="np1" autocomplete="new-password" placeholder="请输入新密码">
+    <label for="np2">确认新密码</label>
+    <input type="password" id="np2" autocomplete="new-password" placeholder="请再次输入新密码">
+    <ul class="rules" id="ruleList">
+      <li data-r="len">至少 8 位</li>
+      <li data-r="mix">同时包含字母和数字</li>
+      <li data-r="diff">不与柜员号相同</li>
+      <li data-r="seq">不含 3 位以上连续字符（如 123、abc）</li>
+      <li data-r="rep">不含 3 位以上重复字符（如 111、aaa）</li>
+      <li data-r="same">两次输入一致</li>
+    </ul>
+    <button class="btn" id="btnChange">确认修改</button>
+    <button class="btn ghost" id="btnBackLogin" style="margin-top:10px">返回登录</button>
+    <div class="msg" id="pwdMsg"></div>
+  </div>
+
+  <!-- ============ ③ 登录成功 ============ -->
+  <div class="card view" id="vHome">
+    <h2>登录成功</h2>
+    <p class="sub">以下是你当前账号的权限，进入系统后界面会据此显示</p>
+    <div class="info-grid">
+      <div><div class="k">柜员号</div><div class="v" id="iTeller">—</div></div>
+      <div><div class="k">姓名</div><div class="v" id="iName">—</div></div>
+      <div><div class="k">所属支行</div><div class="v" id="iBranch">—</div></div>
+      <div><div class="k">角色</div><div class="v" id="iRole">—</div></div>
+      <div><div class="k">数据范围</div><div class="v" id="iScope">—</div></div>
+      <div><div class="k">可否编辑评分</div><div class="v" id="iEdit">—</div></div>
+    </div>
+    <div class="tags" id="iPages"></div>
+    <div class="warnbox" id="homeNote" style="display:none"></div>
+    <button class="btn" id="btnEnter">进入系统</button>
+    <button class="btn ghost" id="btnOut" style="margin-top:10px">退出登录</button>
+  </div>
+
+  <div class="foot">数据存储于 Supabase · 浏览器不持有任何密钥，全部经服务端代理访问</div>
+</div>
+
+<script>
+/* =====================================================================
+ * P0 登录 / 强制改密
+ * 不直连数据库，也不往页面里塞任何 key。所有请求都打到同域的 /api/*
+ * （Vercel Serverless Function），由服务端用环境变量访问 Supabase。
+ *
+ * 账号体系不用 Supabase Auth：账号就存在业务表 skillm_app_users 里，
+ * 密码由服务端 scrypt 校验，登录成功拿到的是一枚服务端自签的令牌。
+ * ===================================================================== */
+
+const PAGE_LABEL = {
+  people:'① 人员名单', score:'② 技能评分', matrix:'③ 匹配矩阵',
+  insight:'④ 分析洞察', admin:'⑤ 用户管理'
+};
+
+let curTeller = '';        // 当前登录的柜员号
+let curMe = null;          // 当前账号的权限档案
+
+/* ---------------- 小工具 ---------------- */
+const $ = s => document.querySelector(s);
+function show(id){
+  ['vSetup','vLogin','vPwd','vHome'].forEach(v => $('#'+v).classList.toggle('on', v === id));
+}
+function msg(el, text, type){
+  const n = typeof el === 'string' ? $(el) : el;
+  n.className = 'msg ' + (type || 'err') + (text ? ' on' : '');
+  n.textContent = text || '';
+}
+
+/* ---------------- 会话（token 存本地） ---------------- */
+const TKEY = 'matrix_token';
+function getToken(){ try { return localStorage.getItem(TKEY) || ''; } catch(e){ return ''; } }
+function setToken(t){
+  try { t ? localStorage.setItem(TKEY, t) : localStorage.removeItem(TKEY); } catch(e){}
+}
+
+/* ---------------- 调自己的后端 ---------------- */
+async function api(path, opt){
+  opt = opt || {};
+  const headers = { 'Content-Type': 'application/json' };
+  const tk = getToken();
+  if (tk) headers['Authorization'] = 'Bearer ' + tk;
+
+  let res;
+  try {
+    res = await fetch(path, {
+      method: opt.method || 'GET',
+      headers: headers,
+      body: opt.body ? JSON.stringify(opt.body) : undefined,
+      cache: 'no-store'
+    });
+  } catch(e){
+    return { ok:false, status:0, code:'network',
+             msg:'无法连接服务器（' + (e.message || e) + '）' };
+  }
+
+  let data = null;
+  try { data = await res.json(); } catch(e){ data = null; }
+  if (!data || typeof data !== 'object'){
+    return { ok:false, status:res.status, code:'bad_response',
+             msg:'服务器返回异常（HTTP ' + res.status + '）' };
+  }
+  data.status = res.status;
+  return data;
+}
+
+/* =====================================================================
+ * 密码规则（前端即时提示；服务端 /api/change-password 会再校验一遍，
+ * 以服务端为准 —— 绕过前端直接调接口也设不了弱密码）
+ * ===================================================================== */
+function hasSeq(s, n){
+  n = n || 3;
+  if (!s || s.length < n) return false;
+  let up = 1, dn = 1;
+  for (let i = 1; i < s.length; i++){
+    const d = s.charCodeAt(i) - s.charCodeAt(i-1);
+    up = (d ===  1) ? up + 1 : 1;
+    dn = (d === -1) ? dn + 1 : 1;
+    if (up >= n || dn >= n) return true;
+  }
+  return false;
+}
+const WEAK = ['admin123','password1','abc12345','qwer1234','88888888',
+              '12345678','11111111','a1234567','abcd1234','admin888'];
+
+function checkPwd(pwd, teller){
+  if (!pwd) return '请输入新密码';
+  if (pwd.length < 8) return '密码至少 8 位';
+  if (!/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) return '密码必须同时包含字母和数字';
+  if (teller && pwd === teller) return '密码不能与柜员号相同';
+  if (WEAK.indexOf(pwd.toLowerCase()) >= 0) return '密码过于简单，请更换';
+  if (hasSeq(pwd, 3)) return '密码不能包含连续字符（如 123、abc）';
+  if (/(.)\1{2,}/.test(pwd)) return '密码不能包含 3 个以上重复字符（如 111、aaa）';
+  return '';
+}
+function ruleState(pwd, pwd2, teller){
+  return {
+    len:  pwd.length >= 8,
+    mix:  /[A-Za-z]/.test(pwd) && /[0-9]/.test(pwd),
+    diff: !!pwd && !!teller && pwd !== teller,
+    seq:  !!pwd && !hasSeq(pwd, 3),
+    rep:  !!pwd && !/(.)\1{2,}/.test(pwd),
+    same: !!pwd && pwd === pwd2
+  };
+}
+function paintRules(){
+  const st = ruleState($('#np1').value, $('#np2').value, curTeller);
+  $('#ruleList').querySelectorAll('li').forEach(li => {
+    li.classList.toggle('pass', !!st[li.dataset.r]);
+  });
+}
+
+/* =====================================================================
+ * 主流程
+ * ===================================================================== */
+function showSetup(text){
+  $('#setupBox').style.display = text ? 'none' : 'block';
+  msg('#setupMsg', text || '');
+  show('vSetup');
+}
+
+function fillLast(){
+  try { const last = localStorage.getItem('matrix_last_teller'); if (last) $('#teller').value = last; } catch(e){}
+}
+
+async function boot(){
+  const tk = getToken();
+  const r = await api('/api/me');
+
+  if (r.code === 'env_missing'){ showSetup(r.msg); return; }
+  if (r.status === 0){
+    showSetup('本页需要通过服务端访问。请用 Vercel 部署后的网址打开，不要用 file:// 直接双击打开。');
+    return;
+  }
+
+  if (!tk || !r.ok){
+    setToken('');
+    show('vLogin');
+    fillLast();
+    if (r.code === 'disabled') msg('#loginMsg', r.msg || '账号已停用，请联系管理员');
+    return;
+  }
+
+  route(r.me);
+}
+
+/** 按档案决定去改密页还是主页 */
+function route(me){
+  curMe = me;
+  curTeller = me.teller_no || curTeller;
+
+  if (me.status === 'disabled'){
+    setToken('');
+    show('vLogin');
+    msg('#loginMsg', '账号已停用，请联系管理员');
+    return;
+  }
+
+  if (me.must_change_pwd){
+    $('#pwdSub').textContent = curTeller + '，为保障账号安全，必须修改初始密码后才能使用系统';
+    paintRules();
+    show('vPwd');
+    return;
+  }
+
+  showHome(me);
+}
+
+async function doLogin(){
+  const teller = $('#teller').value.trim();
+  const pwd    = $('#pwd').value;
+
+  msg('#loginMsg', '');
+  if (!teller){ msg('#loginMsg', '请输入柜员号'); return; }
+  if (!pwd){ msg('#loginMsg', '请输入密码'); return; }
+
+  $('#btnLogin').disabled = true;
+  $('#btnLogin').textContent = '登录中…';
+
+  try {
+    const r = await api('/api/login', { method:'POST', body:{ teller: teller, password: pwd } });
+
+    if (!r.ok){
+      msg('#loginMsg', r.msg || '登录失败');
+      return;
+    }
+
+    setToken(r.token);
+    try { localStorage.setItem('matrix_last_teller', teller); } catch(e){}
+    $('#pwd').value = '';
+    route(r.me);
+
+  } catch(e){
+    msg('#loginMsg', '登录异常：' + (e.message || e));
+  } finally {
+    $('#btnLogin').disabled = false;
+    $('#btnLogin').textContent = '登 录';
+  }
+}
+
+function showHome(me){
+  $('#iTeller').textContent = me.teller_no || '—';
+  $('#iName').textContent   = me.name || '—';
+  $('#iBranch').textContent = me.branch || '（未设置）';
+  $('#iRole').textContent   = me.role === 'admin' ? '管理员（全部权限）' : '普通用户';
+  $('#iScope').textContent  = me.data_scope === 'all' ? '全行数据' : '本支行数据';
+  $('#iEdit').textContent   = me.can_edit ? '允许' : '不允许（只读）';
+
+  const pages = (me.visible_pages && me.visible_pages.length)
+    ? me.visible_pages : ['people','score','matrix','insight'];
+  $('#iPages').innerHTML = pages
+    .map(k => `<span class="tag">${PAGE_LABEL[k] || k}</span>`).join('')
+    + `<span class="tag ${me.can_edit ? 'g' : 'o'}">${me.can_edit ? '可编辑评分' : '评分只读'}</span>`;
+
+  // 会话信息留给主程序读取（P2 接入 skill-matrix.html）
+  try { sessionStorage.setItem('matrix_me', JSON.stringify(me)); } catch(e){}
+
+  const note = $('#homeNote');
+  if (me.role !== 'admin' && !me.branch){
+    note.style.display = 'block';
+    note.textContent = '你的账号尚未设置所属支行。数据范围为"本支行"时，未设置支行将看不到任何数据，请联系管理员补填。';
+  } else {
+    note.style.display = 'none';
+  }
+
+  show('vHome');
+}
+
+/* 强制改密：交给服务端改（规则由服务端强制），改完销记首登状态 */
+async function doChange(){
+  const p1 = $('#np1').value, p2 = $('#np2').value;
+  msg('#pwdMsg', '');
+
+  const err = checkPwd(p1, curTeller);
+  if (err){ msg('#pwdMsg', err); return; }
+  if (p1 !== p2){ msg('#pwdMsg', '两次输入的密码不一致'); return; }
+
+  $('#btnChange').disabled = true;
+  $('#btnChange').textContent = '提交中…';
+
+  try {
+    const r = await api('/api/change-password', { method:'POST', body:{ newPassword: p1 } });
+
+    if (!r.ok){
+      // 服务端说登录态失效了，就回登录页用新密码登一次
+      if (r.code === 'unauthorized'){
+        setToken('');
+        msg('#pwdMsg', '登录状态已失效，请用新密码重新登录', 'info');
+        show('vLogin');
+        fillLast();
+        return;
+      }
+      msg('#pwdMsg', r.msg || '修改失败');
+      return;
+    }
+
+    msg('#pwdMsg', '密码修改成功，正在进入系统…', 'ok');
+    $('#np1').value = ''; $('#np2').value = ''; paintRules();
+    showHome(r.me);
+
+  } catch(e){
+    msg('#pwdMsg', '提交异常：' + (e.message || e));
+  } finally {
+    $('#btnChange').disabled = false;
+    $('#btnChange').textContent = '确认修改';
+  }
+}
+
+async function doLogout(){
+  try { await api('/api/logout', { method:'POST' }); } catch(e){}
+  setToken('');
+  curMe = null;
+  try { sessionStorage.removeItem('matrix_me'); } catch(e){}
+  $('#pwd').value = '';
+  msg('#loginMsg', '');
+  show('vLogin');
+  fillLast();
+}
+
+/* ---------------- 进入系统 ---------------- */
+function enterSystem(){
+  // P2 会把主程序接入同一套登录态；在那之前先打开单机版并提示差异
+  const note = $('#homeNote');
+  note.style.display = 'block';
+  note.textContent = '主程序接入登录态属于 P2 阶段（尚在开发）。当前可先打开单机版 skill-matrix.html 使用；'
+                   + '登录态已保存在本次会话中，接入后会自动识别。';
+  window.open('skill-matrix.html', '_blank');
+}
+
+/* ---------------- 事件绑定 ---------------- */
+$('#btnLogin').addEventListener('click', doLogin);
+$('#pwd').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('#teller').addEventListener('keydown', e => { if (e.key === 'Enter') $('#pwd').focus(); });
+$('#btnChange').addEventListener('click', doChange);
+$('#np1').addEventListener('input', paintRules);
+$('#np2').addEventListener('input', paintRules);
+$('#np1').addEventListener('keydown', e => { if (e.key === 'Enter') $('#np2').focus(); });
+$('#np2').addEventListener('keydown', e => { if (e.key === 'Enter') doChange(); });
+$('#btnBackLogin').addEventListener('click', doLogout);
+$('#btnOut').addEventListener('click', doLogout);
+$('#btnEnter').addEventListener('click', enterSystem);
+$('#btnRetry').addEventListener('click', boot);
+
+boot();
+</script>
+</body>
+</html>

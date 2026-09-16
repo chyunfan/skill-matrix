@@ -149,12 +149,25 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
 <script>
 /* =====================================================================
  * P0 登录 / 强制改密
- * 不直连数据库，也不往页面里塞任何 key。所有请求都打到同域的 /api/*
+ * 不直连数据库，也不往页面里塞任何 key。所有请求都打到同域的 api/*
  * （Vercel Serverless Function），由服务端用环境变量访问 Supabase。
  *
  * 账号体系不用 Supabase Auth：账号就存在业务表 skillm_app_users 里，
  * 密码由服务端 scrypt 校验，登录成功拿到的是一枚服务端自签的令牌。
  * ===================================================================== */
+
+/* ---------------------------------------------------------------------
+ * 后端接口前缀 —— 自动适配两种部署形态
+ *   站点根域部署： https://xxx/                页面 → 接口 https://xxx/api
+ *   子路径部署：   https://xxx/skill-matrix    页面 → 接口 https://xxx/skill-matrix/api
+ * 推导规则：以当前页面路径为基准，去掉末尾的 html 文件名，再接 /api。
+ * 注意不能用相对路径 "api/me"：页面 /skill-matrix 无尾斜杠时会被解析到根域。
+ * ------------------------------------------------------------------- */
+const API_BASE = (function () {
+  let p = location.pathname.replace(/\/+$/, '');            // 去掉尾部斜杠
+  if (/\.html?$/i.test(p)) p = p.replace(/\/[^/]*$/, '');   // URL 直接指向 html 文件
+  return p + '/api';                                        // 例：/skill-matrix/api
+})();
 
 const PAGE_LABEL = {
   people:'① 人员名单', score:'② 技能评分', matrix:'③ 匹配矩阵',
@@ -189,9 +202,12 @@ async function api(path, opt){
   const tk = getToken();
   if (tk) headers['Authorization'] = 'Bearer ' + tk;
 
+  // 调用处统一写 '/api/xxx'，此处换成实际前缀（根域 /api，子路径 /skill-matrix/api）
+  const url = path.indexOf('/api') === 0 ? API_BASE + path.slice(4) : path;
+
   let res;
   try {
-    res = await fetch(path, {
+    res = await fetch(url, {
       method: opt.method || 'GET',
       headers: headers,
       body: opt.body ? JSON.stringify(opt.body) : undefined,
@@ -277,7 +293,15 @@ async function boot(){
 
   if (r.code === 'env_missing'){ showSetup(r.msg); return; }
   if (r.status === 0){
-    showSetup('本页需要通过服务端访问。请用 Vercel 部署后的网址打开，不要用 file:// 直接双击打开。');
+    showSetup('本页需要通过服务端访问。请用部署后的网址打开，不要用 file:// 直接双击打开。'
+      + '\n当前接口前缀：' + API_BASE);
+    return;
+  }
+
+  // 接口没打到本应用（多为部署在子路径、前缀不对）：把实际地址显示出来，便于对照
+  if (r.code === 'bad_response' && (r.status === 404 || r.status === 405)){
+    showSetup('接口未命中：' + API_BASE + '/me 返回 HTTP ' + r.status
+      + '。请确认服务端函数已随本项目一起部署在该路径下。');
     return;
   }
 

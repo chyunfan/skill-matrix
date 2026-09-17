@@ -123,6 +123,16 @@ td input:focus{border-color:var(--primary);background:#fff}
 .sc-cell.lv1{background:var(--l1)}
 .sc-cell.lv2{background:var(--l2)}
 .sc-cell.lv3{background:var(--l3)}
+/* 文字录入项（在「技能项管理」里把某技能设为「文字录入」，如"员工优缺点"）：
+   不参与等级 / 综合得分 / 矩阵配色 / 人岗匹配度，只存一段自由文本 */
+.stable th.skcol .th-kind{display:block;font-weight:400;font-size:10.5px;letter-spacing:1px;opacity:.9;margin-top:1px}
+.stable td.note-td{padding:4px}
+.note-inp{
+  width:100%;height:38px;padding:0 9px;border:1px solid var(--line2);border-radius:5px;
+  font-family:inherit;font-size:13px;color:var(--text);background:#fff;outline:none;
+}
+.note-inp::placeholder{color:#c3cedb;font-size:12.5px}
+.note-inp:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(47,157,232,.13)}
 .pill{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:600}
 /* 熟练度标签居中：▲ 绝对定位在标签外侧，不参与布局，标签始终真正居中 */
 .fit-cell{text-align:center}
@@ -277,10 +287,15 @@ textarea.paste{
 .tplinfo td.ds{color:var(--muted)}
 /* 技能项管理 */
 .skmgr{width:100%}
+.skmgr th{padding:6px 8px;font-size:12px;font-weight:600}
+.skmgr th.ord{width:30px}
 .skmgr td{padding:6px 8px;border-bottom:1px solid #f0f4f9;font-size:13px;vertical-align:middle}
 .skmgr tbody tr:last-child td{border-bottom:none}
 .skmgr input[type=text]{width:100%;padding:5px 8px}
+.skmgr select{padding:5px 6px;font-size:12.5px}
+.skmgr tbody tr:hover td{background:#fafcff}
 .skmgr .ord{color:var(--faint);width:30px}
+select[disabled]{opacity:.5;cursor:not-allowed}
 /* 技能项：批量文本录入 */
 .bulkbox{margin-top:10px;border:1px solid var(--line);border-radius:8px;background:#f8fafd;padding:10px 12px}
 .bulkbox .bh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:7px;font-size:13px;font-weight:600}
@@ -381,7 +396,7 @@ textarea.paste{
   <div class="card">
     <div class="card-head">
       技能评分录入
-      <span class="sub">单击单元格：未掌握 → 待培养 → 胜任 → 精通 循环 ｜ 右键：降一级 ｜ Shift+单击：清空</span>
+      <span class="sub">单击单元格：未掌握 → 待培养 → 胜任 → 精通 循环 ｜ 右键：降一级 ｜ Shift+单击：清空 ｜ 带「文字录入」标记的列直接输入文字</span>
       <div class="spacer"></div>
       <span class="mono" id="scoreProgress">已评分 0 / 0</span>
     </div>
@@ -533,13 +548,14 @@ textarea.paste{
       <p><b>① 导入名单</b>　在"人员名单"页点击<b>导入名单</b>。弹窗内先点<b>下载导入模板</b>，模板共 6 列，<i class="req">★</i> 标注的是必输项：</p>
       <p style="padding-left:16px;color:var(--muted)">必输：<b>机构号、柜员号、姓名</b>（缺少姓名的人员不会被导入；缺机构号/柜员号无法按柜员号去重定位）<br>选填：机构名称、支行、岗位（缺岗位无法测算人岗匹配度，缺支行不影响矩阵生成但无法按支行分组）</p>
       <p>填好后上传文件，或直接从 Excel 全选复制、粘贴到文本框。系统按表头名称自动识别各列，列顺序可调整；识别不准时可在"列映射"中手动改。</p>
-      <p><b>② 技能评分</b>　在"技能评分"页点击单元格录入熟练度。单击循环切换：<span class="pill" style="background:#f1f5f9;color:#94a3b8">未掌握</span> → <span class="pill" style="background:#a8bcd4;color:#fff">待培养</span> → <span class="pill" style="background:#2f9de8;color:#fff">胜任</span> → <span class="pill" style="background:#1553a8;color:#fff">精通</span>。右键降一级，Shift+单击清空。右上角可用"批量设置"一次性给筛选出的人员赋等级。</p>
-      <p style="padding-left:16px;color:var(--muted)"><b>技能项可自主增减</b>：默认是柜面业务 / 社保业务 / 理财辅助 / 对公业务，点右上角<b>「⚙ 技能项管理」</b>可以新增（如"外汇业务""信贷调查"）、改名、删除或调整列顺序。<b>技能项多时用「⇥ 批量文本录入」</b>一次粘一批：一行一个，也支持用「、，,；;」分隔，或直接从 Excel 粘一列（自动跳过序号列和"已评分 N 人"备注列）。改名会保留原有评分；删除会一并清除该项的评分（有二次确认）。新增技能项后，记得去「④ 分析洞察」设置各岗位对它的要求等级。</p>
+      <p><b>② 技能评分</b>　在"技能评分"页点击单元格录入熟练度。单击循环切换：<span class="pill" style="background:#f1f5f9;color:#94a3b8">未掌握</span> → <span class="pill" style="background:#a8bcd4;color:#fff">待培养</span> → <span class="pill" style="background:#2f9de8;color:#fff">胜任</span> → <span class="pill" style="background:#1553a8;color:#fff">精通</span>。右键降一级，Shift+单击清空。右上角可用"批量设置"一次性给筛选出的人员赋等级。<br>
+      表头带<b>「文字录入」</b>标记的列（在「⚙ 技能项管理」里设成文字录入的技能项，如"员工优缺点"）不能打分，直接在单元格里输入文字即可，边打边自动保存；这类列不参与综合得分，也不出现在匹配矩阵与人岗匹配度里。综合得分的满分 = 熟练度项数 × 3。</p>
+      <p style="padding-left:16px;color:var(--muted)"><b>技能项可自主增减、可按项选择录入方式</b>：默认是柜面业务 / 社保业务 / 理财辅助 / 对公业务，点右上角<b>「⚙ 技能项管理」</b>可以新增（如"外汇业务""信贷调查"）、改名、删除或调整列顺序。<b>每项都有「录入方式」下拉</b>：选<b>熟练度评分</b>就是 4 档打分；选<b>文字录入</b>则该列在评分表里变成一个文本框（如"员工优缺点"），<b>不计入综合得分、不参与匹配矩阵与人岗匹配度</b>。<b>技能项多时用「⇥ 批量文本录入」</b>一次粘一批：一行一个，也支持用「、，,；;」分隔，或直接从 Excel 粘一列（自动跳过序号列和"已评分 N 人"备注列）——批量添加的默认为熟练度评分，需要文字录入的在列表里逐项切换。改名会保留原有评分与文字内容；删除会一并清除（有二次确认）；把某项从"熟练度评分"改成"文字录入"时已录的等级只是不再参与计算，<b>切回即恢复</b>。新增技能项后，记得去「④ 分析洞察」设置各岗位对它的要求等级。</p>
       <p><b>③ 匹配矩阵</b>　自动生成团队技能匹配矩阵图，可切换分组维度（支行 / 机构 / 岗位）与排序方式，点<b>导出图片 PNG</b> 直接得到可贴进汇报材料的图片。</p>
       <p><b>④ 分析洞察</b>　查看技能分布、人员排名；在"岗位技能标准"中设定各岗位的期望等级后，会自动算出每个人对其岗位的<b>匹配度</b>并列出未达标技能。标准表末列的<b>「达标 / 总人数」</b>形如 <b>4/5</b>，表示该岗位有 5 人、其中 4 人的全部技能都已达到岗位要求（按上方各技能的期望等级判定）。<br>
       顶部可按<b>支行</b>筛选：切换后，团队人数/录入完成度等指标、技能画像、成员排名、人岗匹配度都会只统计该支行的人员（右上角显示"该支行 N / 全部 M 人"）。岗位技能标准是全局设置，不随筛选变化；该筛选与「② 技能评分」的筛选相互独立。<br>
       团队成员技能排名、岗位技能标准、人岗匹配度三张表<b>分页显示</b>（岗位技能标准与人岗匹配度默认每页 20 条；<b>团队成员技能排名的条数会自动对齐左侧「团队技能画像」的高度</b>，好让两栏齐平、不给左栏留一大片空白），分页条右侧可直接改每页条数 —— 排名的手改过之后就固定用你设的值，切换支行或重新导入名单再恢复自动对齐。切换支行或导入名单后自动回到第 1 页；<b>导出 Excel 与打印都输出全部人员</b>，不受分页影响（打印时会自动展开全部行）。<br>
-      点右上角<b>「导出 Excel」</b>可把当前筛选范围内的分析结果导出为 4 个工作表：<b>数据统计 / 团队技能画像 / 团队成员技能排名 / 岗位技能标准与人岗匹配度</b>。文件名会自动带上支行名与日期（如「团队技能分析-富春支行-20260914.xlsx」）。离线取不到 Excel 组件时会自动改导出 `.xls` 格式（工作表结构一致，Excel 打开若提示格式选"是"即可）。</p>
+      点右上角<b>「导出 Excel」</b>可把当前筛选范围内的分析结果导出为 4 个工作表：<b>数据统计 / 团队技能画像 / 团队成员技能排名 / 岗位技能标准与人岗匹配度</b>。文件名会自动带上支行名与日期（如「团队技能分析-富春支行-20260914.xlsx」）。若配置了<b>文字录入项</b>（如"员工优缺点"），它们会作为附列出现在「团队成员技能排名」与「人岗匹配度」两张表里，但不参与各项统计指标。离线取不到 Excel 组件时会自动改导出 `.xls` 格式（工作表结构一致，Excel 打开若提示格式选"是"即可）。</p>
       <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
       <p style="color:var(--muted)">数据保存在本机浏览器（localStorage），不上传任何服务器。清除浏览器数据会导致内容丢失，重要数据请及时导出。</p>
     </div>
@@ -552,7 +568,7 @@ textarea.paste{
   <div class="modal" style="max-width:780px">
     <div class="modal-head">技能项管理<div class="spacer"></div></div>
     <div class="modal-body">
-      <div class="step"><b>技能项</b>　可新增 / 改名 / 删除 / 调整顺序，改动会同步到「② 技能评分」「③ 匹配矩阵」「④ 分析洞察」</div>
+      <div class="step"><b>技能项</b>　可新增 / 改名 / 删除 / 调整顺序，并可为每项选择<b>录入方式</b>，改动会同步到「② 技能评分」「③ 匹配矩阵」「④ 分析洞察」</div>
       <table class="skmgr" id="skillTable"><tbody></tbody></table>
       <div style="display:flex;gap:10px;align-items:center;margin:12px 0 2px;flex-wrap:wrap">
         <button class="btn sm" id="btnSkillAdd">＋ 添加技能项</button>
@@ -574,9 +590,11 @@ textarea.paste{
       </div>
       <div class="warnbox" style="margin:14px 0 0">
         <b>注意事项</b><br>
-        · 改名会保留原有评分（矩阵列名和评分数据都会跟着改）<br>
-        · <b>删除会清除所有人在该技能上的评分，且不可撤销</b>，删除前会再次确认<br>
-        · 新增技能项后，请到「④ 分析洞察 → 岗位技能标准」设置各岗位对该技能的要求等级（默认「未掌握」＝不要求）
+        · <b>录入方式</b>分两种：<b>熟练度评分</b>（未掌握／待培养／胜任／精通 4 档，参与综合得分、矩阵配色与人岗匹配度）；<b>文字录入</b>（只填一段自由文本，如"员工优缺点"，<b>不参与</b>得分、矩阵与人岗匹配度）<br>
+        · 改名会保留原有评分与文字内容（矩阵列名和数据都会跟着改）<br>
+        · <b>删除会清除所有人在该技能上的评分／文字内容，且不可撤销</b>，删除前会再次确认<br>
+        · 新增技能项后，请到「④ 分析洞察 → 岗位技能标准」设置各岗位对该技能的要求等级（默认「未掌握」＝不要求）；文字录入项无需设置<br>
+        · 由「熟练度评分」改为「文字录入」时，<b>已录入的等级不会被删除</b>，只是不再参与计算；切回熟练度评分即恢复
       </div>
     </div>
     <div class="modal-foot">
@@ -595,6 +613,14 @@ textarea.paste{
 /* 技能项：可在界面「技能项管理」里自主增删改，SKILLS 是运行期的可变列表 */
 const DEFAULT_SKILLS = ['柜面业务','社保业务','理财辅助','对公业务'];
 let SKILLS = DEFAULT_SKILLS.slice();
+/* 技能项分两类：
+   level = 熟练度评分（0~3 档，默认）——参与综合得分、矩阵配色、岗位标准与人岗匹配度
+   text  = 文字录入（如"员工优缺点"）——只存一段自由文本，不参与任何量化测算
+   类型记在 state.skillTypes 里且**只记 text 的项**（稀疏），缺省即 level；技能改名/删除时同步迁移 */
+const KIND_NAME = {level:'熟练度评分', text:'文字录入'};
+const skillKind  = s => (state.skillTypes && state.skillTypes[s] === 'text') ? 'text' : 'level';
+const levelSkills = () => SKILLS.filter(s => skillKind(s) === 'level');
+const textSkills  = () => SKILLS.filter(s => skillKind(s) === 'text');
 const LEVELS = [
   {v:0, name:'未掌握', cls:'lv0', bg:'#f1f5f9', fg:'#94a3b8'},
   {v:1, name:'待培养', cls:'lv1', bg:'#a8bcd4', fg:'#ffffff'},
@@ -602,17 +628,32 @@ const LEVELS = [
   {v:3, name:'精通',   cls:'lv3', bg:'#1553a8', fg:'#ffffff'}
 ];
 const LV = v => LEVELS[Math.max(0, Math.min(3, v|0))];
-const maxScore = () => SKILLS.length * 3;                 // 综合得分上限随技能项数量变化
-const scoreCls = sc => { const m = maxScore();            // 得分飘带分级（4 项技能时 = 原 11 / 7 阈值）
+const maxScore = () => levelSkills().length * 3;          // 综合得分上限只数熟练度项
+const scoreCls = sc => { const m = maxScore() || 1;       // 得分飘带分级（4 项技能时 = 原 11 / 7 阈值）
   return sc >= m*0.9 ? 'g' : (sc >= m*0.55 ? 'y' : 'r'); };
-const defaultStdRow = () => { const o = {}; SKILLS.forEach(s=>o[s] = 2); return o; };
-/* 保证每个岗位标准都含当前全部技能项（缺的补 0 = 该岗位不要求此技能） */
+const defaultStdRow = () => { const o = {}; levelSkills().forEach(s=>o[s] = 2); return o; };
+/* 保证每个岗位标准都含当前全部**熟练度**技能项（缺的补 0 = 该岗位不要求此技能）；文字录入项不进标准 */
 function ensureStdSkills(){
   Object.keys(state.standards).forEach(po=>{
     const st = state.standards[po] = state.standards[po] || {};
-    SKILLS.forEach(s=>{ if(typeof st[s] !== 'number') st[s] = 0; });
-    Object.keys(st).forEach(s=>{ if(SKILLS.indexOf(s) < 0) delete st[s]; });
+    levelSkills().forEach(s=>{ if(typeof st[s] !== 'number') st[s] = 0; });
+    Object.keys(st).forEach(s=>{ if(levelSkills().indexOf(s) < 0) delete st[s]; });
   });
+}
+/* 清理改名/删除技能后残留的类型记录 */
+function ensureSkillTypes(){
+  const t = state.skillTypes = state.skillTypes || {};
+  Object.keys(t).forEach(k=>{ if(SKILLS.indexOf(k) < 0 || t[k] !== 'text') delete t[k]; });
+}
+function ensureMeta(){ ensureSkillTypes(); ensureStdSkills(); }
+
+/* 某人的文字录入内容（不存在时自动建对象，便于直接赋值） */
+function notesOf(p){ if(!p.notes || typeof p.notes !== 'object') p.notes = {}; return p.notes; }
+/* 该项是否已录入：熟练度看等级 > 0，文字录入看非空 */
+function hasEntry(p, s){
+  return skillKind(s) === 'text'
+    ? String(notesOf(p)[s] || '').trim() !== ''
+    : (p.skills[s] || 0) > 0;
 }
 
 /* req = 必输项（模板中用 ★ 标注；导入时逐行校验）
@@ -635,7 +676,7 @@ const DEFAULT_STD = {
   '运营主管':{'柜面业务':3,'社保业务':3,'理财辅助':2,'对公业务':2}
 };
 
-let state = { people:[], standards:{}, skillList:DEFAULT_SKILLS.slice(), mxTitle:'团队技能匹配矩阵', mxSubtitle:'' };
+let state = { people:[], standards:{}, skillList:DEFAULT_SKILLS.slice(), skillTypes:{}, mxTitle:'团队技能匹配矩阵', mxSubtitle:'' };
 let uid = 1;
 const U = () => 'p' + (uid++) + '_' + Math.random().toString(36).slice(2,7);
 
@@ -737,16 +778,17 @@ function load(){
     const o = JSON.parse(raw);
     if(o && Array.isArray(o.people)){
       state.people = o.people.map(p => Object.assign({
-        id:U(), orgNo:'', orgName:'', branch:'', tellerNo:'', name:'', post:'', skills:{}
-      }, p, {skills: p.skills || {}, id: p.id || U()}));
+        id:U(), orgNo:'', orgName:'', branch:'', tellerNo:'', name:'', post:'', skills:{}, notes:{}
+      }, p, {skills: p.skills || {}, notes: p.notes || {}, id: p.id || U()}));
       state.skillList = (Array.isArray(o.skillList) && o.skillList.length)
         ? o.skillList.filter(s=>typeof s === 'string' && s.trim()).slice()
         : DEFAULT_SKILLS.slice();
       SKILLS = state.skillList.slice();
+      state.skillTypes = (o.skillTypes && typeof o.skillTypes === 'object') ? o.skillTypes : {};
       state.standards = o.standards || {};
       state.mxTitle = o.mxTitle || '团队技能匹配矩阵';
       state.mxSubtitle = o.mxSubtitle || '';
-      ensureStdSkills();
+      ensureMeta();
       return true;
     }
   }catch(e){ console.warn(e); }
@@ -850,7 +892,7 @@ async function readFileText(file){
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const scoreOf = p => SKILLS.reduce((a,s)=>a + (p.skills[s]||0), 0);
+const scoreOf = p => levelSkills().reduce((a,s)=>a + (p.skills[s]||0), 0);
 const PYE = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
 function pyKey(s){
   const m = {'张':'Z','李':'L','王':'W','刘':'L','陈':'C','杨':'Y','赵':'Z','黄':'H','周':'Z','吴':'W','徐':'X','孙':'S','马':'M','朱':'Z','胡':'H','郭':'G','何':'H','林':'L','高':'G','罗':'L','郑':'Z','梁':'L','谢':'X','宋':'S','唐':'T','许':'X','邓':'D','冯':'F','韩':'H','曹':'C','曾':'Z','彭':'P','萧':'X','蔡':'C','潘':'P','田':'T','董':'D','袁':'Y','于':'Y','余':'Y','叶':'Y','蒋':'J','杜':'D','苏':'S','魏':'W','程':'C','吕':'L','丁':'D','沈':'S','任':'R','姚':'Y','卢':'L','姜':'J','崔':'C','钟':'Z','谭':'T','陆':'L','汪':'W','范':'F','金':'J','石':'S','廖':'L','贾':'J','夏':'X','韦':'W','付':'F','方':'F','白':'B','邹':'Z','孟':'M','熊':'X','秦':'Q','邱':'Q','江':'J','尹':'Y','薛':'X','闫':'Y','段':'D','雷':'L','侯':'H','龙':'L','史':'S','陶':'T','黎':'L','贺':'H','顾':'G','毛':'M','郝':'H','龚':'G','邵':'S','万':'W','钱':'Q','严':'Y','覃':'Q','武':'W','戴':'D','莫':'M','孔':'K','向':'X','汤':'T'};
@@ -915,7 +957,12 @@ function renderScoreHead(){
     '<th class="idx">#</th>' +
     '<th style="width:92px">姓名</th>' +
     '<th style="width:120px">岗位</th>' +
-    SKILLS.map(s=>`<th class="skcol" style="width:150px" data-col="${esc(s)}" title="点击整列设置">${esc(s)}</th>`).join('') +
+    SKILLS.map(s=>{
+      const t = skillKind(s) === 'text';
+      const title = t ? '文字录入项：不参与综合得分、矩阵配色与人岗匹配度' : '点击整列设置';
+      return `<th class="skcol" style="width:${t ? 210 : 150}px" data-col="${esc(s)}" title="${title}">`
+        + `${esc(s)}${t ? '<span class="th-kind">文字录入</span>' : ''}</th>`;
+    }).join('') +
     '<th style="width:110px">综合得分</th></tr>';
 }
 function renderScore(){
@@ -931,6 +978,11 @@ function renderScore(){
         <td><b style="cursor:pointer" data-goto="${p.id}">${esc(p.name)}</b><div class="mono" style="font-size:11px">${esc(p.tellerNo||'')}</div></td>
         <td style="color:var(--muted)">${esc(p.post||'-')}</td>
         ${SKILLS.map(s=>{
+          if(skillKind(s) === 'text'){
+            const txt = notesOf(p)[s] || '';
+            return `<td class="note-td"><input type="text" class="note-inp" data-id="${p.id}" data-skill="${esc(s)}"`
+              + ` value="${esc(txt)}" placeholder="文字录入…" title="${esc(txt)}"></td>`;
+          }
           const v = p.skills[s]||0, L = LV(v);
           return `<td class="skc"><div class="sc-cell ${L.cls}" data-id="${p.id}" data-skill="${esc(s)}">${v?L.name:'—'}</div></td>`;
         }).join('')}
@@ -938,8 +990,14 @@ function renderScore(){
       </tr>`;
     }).join('');
   }
-  const scored = list.filter(p=>SKILLS.some(s=>(p.skills[s]||0)>0)).length;
-  $('#scoreProgress').textContent = `已评分 ${scored} / ${list.length}` + (list.length !== state.people.length ? `（共 ${state.people.length} 人）` : '');
+  paintScoreProgress(list);
+}
+/* 「已录入」的计数口径：有文字录入项时按"填了任一项"计，否则沿用原来的"已评分" */
+function paintScoreProgress(list){
+  const entered = list.filter(p=>SKILLS.some(s=>hasEntry(p, s))).length;
+  const label = textSkills().length ? '已录入' : '已评分';
+  $('#scoreProgress').textContent = `${label} ${entered} / ${list.length}`
+    + (list.length !== state.people.length ? `（共 ${state.people.length} 人）` : '');
 }
 function paintCell(el, v){
   const L = LV(v);
@@ -949,7 +1007,7 @@ function paintCell(el, v){
 function repaintRow(id){
   const p = state.people.find(x=>x.id === id); if(!p) return;
   const tr = document.querySelector('#scoreBody tr[data-id="'+id+'"]'); if(!tr) return;
-  SKILLS.forEach(s=>{
+  levelSkills().forEach(s=>{          // 文字录入项没有等级，不参与重绘
     const c = tr.querySelector('.sc-cell[data-skill="'+CSS.escape(s)+'"]');
     if(c) paintCell(c, p.skills[s]||0);
   });
@@ -968,7 +1026,7 @@ function matrixData(){
   if(sort === 'name')       list.sort((a,b)=>pyKey(a.name).localeCompare(pyKey(b.name)) || a.name.localeCompare(b.name,'zh'));
   else if(sort === 'post')  list.sort((a,b)=>(a.post||'').localeCompare(b.post||'','zh'));
   else if(sort === 'score') list.sort((a,b)=>scoreOf(b) - scoreOf(a));
-  else if(sort === 'master')list.sort((a,b)=>SKILLS.filter(s=>(b.skills[s]||0)===3).length - SKILLS.filter(s=>(a.skills[s]||0)===3).length);
+  else if(sort === 'master')list.sort((a,b)=>levelSkills().filter(s=>(b.skills[s]||0)===3).length - levelSkills().filter(s=>(a.skills[s]||0)===3).length);
 
   if(!gk) return [{name:'', rows:list}];
   const groups = new Map();
@@ -1001,16 +1059,20 @@ function renderMatrix(){
   }
 
   let html = `<div class="mx-title">${esc(state.mxTitle || '团队技能匹配矩阵')}</div>`;
-  html += `<div class="mx-subtitle">${esc(state.mxSubtitle || '')}${state.mxSubtitle?'　·　':''}共 ${total} 人　·　${SKILLS.length} 项技能　·　生成于 ${new Date().toLocaleDateString('zh-CN')}</div>`;
+  const LS = levelSkills(), TS = textSkills();
+  html += `<div class="mx-subtitle">${esc(state.mxSubtitle || '')}${state.mxSubtitle?'　·　':''}共 ${total} 人　·　${LS.length} 项技能　·　生成于 ${new Date().toLocaleDateString('zh-CN')}</div>`;
+  if(TS.length){
+    html += `<div class="mx-subtitle">文字录入项「${esc(TS.join('、'))}」不参与矩阵配色，内容在「② 技能评分」与导出的 Excel 中查看</div>`;
+  }
   html += '<div class="mx"><div class="mx-headrow"><div class="mx-corner"></div>' +
-          SKILLS.map(s=>`<div class="mx-hc">${esc(s)}</div>`).join('') + '</div>';
+          LS.map(s=>`<div class="mx-hc">${esc(s)}</div>`).join('') + '</div>';
 
   blocks.forEach(b=>{
     if(b.name) html += `<div class="mx-group">${esc(b.name)}　<span style="font-weight:400;opacity:.75">${b.rows.length} 人</span></div>`;
     b.rows.forEach(p=>{
       html += '<div class="mx-row"><div class="mx-name"><div class="n">' + esc(p.name||'—') + '</div>' +
               (showSub && p.post ? `<div class="s">${esc(p.post)}</div>` : '') + '</div>';
-      SKILLS.forEach(s=>{
+      LS.forEach(s=>{
         const v = p.skills[s]||0, L = LV(v);
         html += `<div class="mx-c ${L.cls}">${showText && v ? esc(L.name) : ''}</div>`;
       });
@@ -1020,7 +1082,7 @@ function renderMatrix(){
 
   if(showSum){
     html += '<div class="mx-sum"><div class="mx-name">精通人数</div>' +
-      SKILLS.map(s=>{
+      LS.map(s=>{
         const n = state.people.filter(p=>(p.skills[s]||0)===3).length;
         const busy = state.people.filter(p=>(p.skills[s]||0)>=2).length;
         return `<div class="mx-c">${n} 人精通 / ${busy} 可用</div>`;
@@ -1053,7 +1115,8 @@ function exportPNG(){
   blocks.forEach(b=>{ if(b.name) bodyH += groupH; bodyH += b.rows.length * cellH; });
   if(showSum) bodyH += cellH;
 
-  const W = padX*2 + nameW + SKILLS.length*cellW;
+  const LS = levelSkills();
+  const W = padX*2 + nameW + LS.length*cellW;
   const H = padTop + titleH + bodyH + legendH + padTop;
 
   const cv = document.createElement('canvas');
@@ -1081,11 +1144,11 @@ function exportPNG(){
 
   // 表头
   g.fillStyle = '#22384f';
-  g.fillRect(x0, y, nameW + SKILLS.length*cellW, headH);
+  g.fillRect(x0, y, nameW + LS.length*cellW, headH);
   g.fillStyle = '#ffffff';
   g.font = 'bold 15px ' + FONT;
   g.textAlign = 'center';
-  SKILLS.forEach((s,i)=>{
+  LS.forEach((s,i)=>{
     const cx = x0 + nameW + i*cellW + cellW/2;
     g.fillText(s, cx, y + headH/2);
     // 白色分隔线
@@ -1115,7 +1178,7 @@ function exportPNG(){
       }
     }
     // 技能格
-    SKILLS.forEach((s,i)=>{
+    LS.forEach((s,i)=>{
       const cx = x0 + nameW + i*cellW;
       if(isSum){
         const n = state.people.filter(x=>(x.skills[s]||0)===3).length;
@@ -1149,7 +1212,7 @@ function exportPNG(){
   blocks.forEach(b=>{
     if(b.name){
       g.fillStyle = '#dce7f3';
-      g.fillRect(x0, y, nameW + SKILLS.length*cellW, groupH);
+      g.fillRect(x0, y, nameW + LS.length*cellW, groupH);
       g.fillStyle = '#2b4a6f';
       g.textAlign = 'left';
       g.font = 'bold 13px ' + FONT;
@@ -1207,10 +1270,11 @@ function renderInsight(){
   const fb  = $('#insBranchFilter').value;
   const people = insightPeople();
   const n = people.length;
-  const totalCells = n * SKILLS.length;
-  const mastered = people.reduce((a,p)=>a + SKILLS.filter(s=>(p.skills[s]||0)===3).length, 0);
-  const capable  = people.reduce((a,p)=>a + SKILLS.filter(s=>(p.skills[s]||0)>=2).length, 0);
-  const unfilled = people.reduce((a,p)=>a + SKILLS.filter(s=>!(p.skills[s]||0)).length, 0);
+  const LS = levelSkills(), TS = textSkills();   // 只有熟练度项参与量化统计
+  const totalCells = n * LS.length;
+  const mastered = people.reduce((a,p)=>a + LS.filter(s=>(p.skills[s]||0)===3).length, 0);
+  const capable  = people.reduce((a,p)=>a + LS.filter(s=>(p.skills[s]||0)>=2).length, 0);
+  const unfilled = people.reduce((a,p)=>a + LS.filter(s=>!(p.skills[s]||0)).length, 0);
   $('#insScope').textContent = fb ? `${fb} · ${n} / ${all} 人` : `全部 ${all} 人`;
 
   $('#statRow').innerHTML = n ? `
@@ -1228,7 +1292,11 @@ function renderInsight(){
     ? `「${esc(fb)}」没有人员<br><b>请切换支行，或选择「全部支行」</b>`
     : '导入名单并完成评分后，这里会显示团队技能画像';
   let weak = [];
-  $('#skillBars').innerHTML = n ? SKILLS.map(s=>{
+  $('#skillBars').innerHTML = !n
+    ? `<div class="empty">${emptyTip}</div>`
+    : (!LS.length
+        ? '<div class="empty">当前技能项全部为「文字录入」<br><b>没有熟练度项可统计，请到「⚙ 技能项管理」调整</b></div>'
+        : LS.map(s=>{
     const cnt = [0,0,0,0];
     people.forEach(p=>cnt[p.skills[s]||0]++);
     const usable = cnt[2] + cnt[3];
@@ -1243,11 +1311,11 @@ function renderInsight(){
         ${cnt[1]?`<span class="lv1" style="flex:${cnt[1]}">待培养 ${cnt[1]}</span>`:''}
         ${cnt[0]?`<span class="lv0" style="flex:${cnt[0]}"></span>`:''}
       </div></div>`;
-  }).join('') : `<div class="empty">${emptyTip}</div>`;
+  }).join(''));
 
   // 成员排名（分页；默认每页条数自动对齐左栏技能画像的高度，用户改过之后就不再自动调整）
   const rankAll = people.slice().sort((a,b)=>scoreOf(b)-scoreOf(a));
-  const max = Math.max(maxScore(), rankAll.length ? scoreOf(rankAll[0]) : 1);   // 空集时 rankAll[0] 为 undefined，不能直接 scoreOf
+  const max = Math.max(maxScore(), rankAll.length ? scoreOf(rankAll[0]) : 1, 1);   // 空集/全员 0 分时兜 1，避免除以 0
   if(n){
     const rankHtml = pg => pg.rows.map((p,i)=>{
       const sc = scoreOf(p);
@@ -1279,21 +1347,24 @@ function renderInsight(){
       state.standards[po] = Object.assign({}, state.standards[t] || defaultStdRow());
     }
   });
-  ensureStdSkills();   // 技能项有增减时，补齐/清理岗位标准里的技能键
+  ensureMeta();   // 技能项有增减 / 改了类型时，补齐或清理岗位标准里的技能键
 
   // 岗位技能标准（分页，默认步长 20，可在分页条上修改）
   const pgStd = pageSlice('std', Object.keys(state.standards));
-  $('#stdEditor').innerHTML = `
+  $('#stdEditor').innerHTML = (TS.length
+      ? `<div class="okbox" style="margin-bottom:12px">文字录入项「<b>${esc(TS.join('、'))}</b>」不设期望等级，不参与岗位标准与人岗匹配度测算；内容可在「② 技能评分」或导出的 Excel 中查看。</div>`
+      : '')
+    + `
     <table><thead><tr>
       <th style="width:150px">岗位</th>
-      ${SKILLS.map(s=>`<th style="text-align:center">${esc(s)}</th>`).join('')}
+      ${LS.map(s=>`<th style="text-align:center">${esc(s)}</th>`).join('')}
       <th style="width:104px" title="达标人数 / 该岗位总人数（达标 = 岗位要求的全部技能均已达到期望等级）">达标 / 总人数${fb?'（筛选内）':''}</th>
       <th style="width:60px"></th>
     </tr></thead><tbody>
     ${pgStd.rows.map(po=>`
       <tr data-post="${esc(po)}">
         <td><b>${esc(po)}</b></td>
-        ${SKILLS.map(s=>`<td style="text-align:center">
+        ${LS.map(s=>`<td style="text-align:center">
           <select class="std-sel" data-post="${esc(po)}" data-skill="${esc(s)}" style="width:92px">
             ${LEVELS.map(L=>`<option value="${L.v}"${(state.standards[po][s]||0)===L.v?' selected':''}>${L.name}</option>`).join('')}
           </select>
@@ -1327,7 +1398,7 @@ function renderInsight(){
   $('#matchList').innerHTML = warn + `
     <table><thead><tr>
       <th style="width:92px">姓名</th><th style="width:120px">岗位</th>
-      ${SKILLS.map(s=>`<th style="text-align:center">${esc(s)}</th>`).join('')}
+      ${LS.map(s=>`<th style="text-align:center">${esc(s)}</th>`).join('')}
       <th style="width:210px">匹配度</th><th style="width:200px">待补强技能</th>
     </tr></thead><tbody>
     ${pgMatch.rows.map(p=>{
@@ -1337,7 +1408,7 @@ function renderInsight(){
       return `<tr>
         <td><b>${esc(p.name)}</b></td>
         <td style="color:var(--muted)">${esc(p.post||'-')}</td>
-        ${SKILLS.map(s=>{
+        ${LS.map(s=>{
           const cur = p.skills[s]||0;
           const need = m.std ? (m.std[s]||0) : null;
           const short = need !== null && cur < need;
@@ -1360,7 +1431,9 @@ function renderInsight(){
 function meetsStd(p){
   const std = state.standards[p.post];
   if(!std) return false;
-  return SKILLS.every(s => (p.skills[s]||0) >= (std[s]||0));
+  const LS = levelSkills();
+  if(!LS.length) return false;                        // 全是文字录入项 → 无可测算的标准
+  return LS.every(s => (p.skills[s]||0) >= (std[s]||0));
 }
 /* 某岗位在给定人群中的「达标人数 / 总人数」 */
 function postFit(people, po){
@@ -1369,9 +1442,10 @@ function postFit(people, po){
 }
 function matchRate(p){
   const std = state.standards[p.post];
-  if(!std) return {rate:0, gaps:[], std:null};
+  const LS = levelSkills();
+  if(!std || !LS.length) return {rate:0, gaps:[], std:null};
   let need = 0, got = 0, gaps = [];
-  SKILLS.forEach(s=>{
+  LS.forEach(s=>{
     const e = std[s]||0, c = p.skills[s]||0;
     need += e;
     got  += Math.min(e, c);
@@ -1391,15 +1465,16 @@ function insNow(){
 function insStamp(){ return insNow().slice(0,10).replace(/-/g,''); }
 function safeName(s){ return String(s||'').replace(/[\\/:*?"<>|]/g,'').trim(); }
 
-/* 组装 4 个工作表的二维数据 */
+/* 组装 4 个工作表的二维数据（统计口径只含熟练度项；文字录入项单独成列附在人员表里） */
 function insightSheets(people, fb){
   if(!Object.keys(state.standards).length){ state.standards = JSON.parse(JSON.stringify(DEFAULT_STD)); }
   const scope = fb || '全部支行';
   const n = people.length;
-  const totalCells = n * SKILLS.length;
-  const mastered = people.reduce((a,p)=>a + SKILLS.filter(s=>(p.skills[s]||0)===3).length, 0);
-  const capable  = people.reduce((a,p)=>a + SKILLS.filter(s=>(p.skills[s]||0)>=2).length, 0);
-  const unfilled = people.reduce((a,p)=>a + SKILLS.filter(s=>!(p.skills[s]||0)).length, 0);
+  const LS = levelSkills(), TS = textSkills();
+  const totalCells = n * LS.length;
+  const mastered = people.reduce((a,p)=>a + LS.filter(s=>(p.skills[s]||0)===3).length, 0);
+  const capable  = people.reduce((a,p)=>a + LS.filter(s=>(p.skills[s]||0)>=2).length, 0);
+  const unfilled = people.reduce((a,p)=>a + LS.filter(s=>!(p.skills[s]||0)).length, 0);
   const pct = totalCells ? Math.round((totalCells-unfilled)/totalCells*100) : 0;
   const maxS = maxScore();
   const sheets = [];
@@ -1408,7 +1483,8 @@ function insightSheets(people, fb){
   const s1 = [
     ['团队技能分析 · 数据统计'],
     ['统计范围', scope, '', '导出时间', insNow()],
-    ['技能项数', SKILLS.length + ' 项', '', '技能项', SKILLS.join(' / ')],
+    ['技能项数', LS.length + ' 项（熟练度）' + (TS.length ? ' + ' + TS.length + ' 项（文字录入）' : ''),
+     '', '技能项', SKILLS.join(' / ')],
     [],
     ['指标','数值'],
     ['团队人数（人）', n],
@@ -1420,13 +1496,14 @@ function insightSheets(people, fb){
     ['说明','「精通 / 能独立上岗」按技能项计数（某人某项达标计 1 项），不是人数。'],
     ['说明','统计范围取自「④ 分析洞察」页当前选中的支行筛选条件。']
   ];
+  if(TS.length) s1.push(['说明','「' + TS.join('、') + '」为文字录入项，不参与等级统计、岗位标准与人岗匹配度；内容见「团队成员技能排名」表的对应列。']);
   if(fb) s1.push(['说明','本次导出仅含「' + fb + '」的人员，共 ' + n + ' 人。']);
   sheets.push({name:'数据统计', aoa:s1, cols:[26,16,4,14,30]});
 
   /* ② 团队技能画像 */
   const s2 = [['技能项','精通（人）','胜任（人）','待培养（人）','未掌握（人）','可上岗（人）','可上岗率','薄弱提示']];
   const tot = [0,0,0,0];
-  SKILLS.forEach(s=>{
+  LS.forEach(s=>{
     const c = [0,0,0,0];
     people.forEach(p=>c[p.skills[s]||0]++);
     for(let i=0;i<4;i++) tot[i] += c[i];
@@ -1436,39 +1513,46 @@ function insightSheets(people, fb){
   });
   s2.push(['合计（按技能项累计）', tot[3], tot[2], tot[1], tot[0], tot[2]+tot[3], '',
            '合计为各技能项人数之和，非去重人数']);
+  if(TS.length) s2.push([], ['注','「' + TS.join('、') + '」为文字录入项，不参与熟练度分布统计。']);
   sheets.push({name:'团队技能画像', aoa:s2, cols:[16,12,12,14,14,14,10,26]});
 
-  /* ③ 团队成员技能排名 */
+  /* ③ 团队成员技能排名（含文字录入项，附在各熟练度列之后） */
   const rank = people.slice().sort((a,b)=>scoreOf(b)-scoreOf(a));
-  const s3 = [['排名','姓名','柜员号','支行','岗位', ...SKILLS.map(s=>s + '（熟练度）'), '综合得分','满分','得分率']];
+  const s3 = [['排名','姓名','柜员号','支行','岗位', ...LS.map(s=>s + '（熟练度）'),
+               ...TS.map(s=>s + '（文字录入）'), '综合得分','满分','得分率']];
   rank.forEach((p,i)=>{
     const sc = scoreOf(p);
     s3.push([i+1, p.name, p.tellerNo||'', p.branch||'', p.post||'',
-             ...SKILLS.map(s=>LV(p.skills[s]||0).name),
+             ...LS.map(s=>LV(p.skills[s]||0).name),
+             ...TS.map(s=>(p.notes||{})[s] || ''),
              sc, maxS, (maxS ? Math.round(sc/maxS*100) : 0) + '%']);
   });
-  sheets.push({name:'团队成员技能排名', aoa:s3, cols:[6,10,12,14,14, ...SKILLS.map(()=>16), 10,8,9]});
+  if(TS.length) s3.push([], ['注','「综合得分」只累加熟练度项（满分 ' + maxS + ' 分）；文字录入项不参与得分，仅供查阅。']);
+  sheets.push({name:'团队成员技能排名', aoa:s3,
+               cols:[6,10,12,14,14, ...LS.map(()=>16), ...TS.map(()=>34), 10,8,9]});
 
-  /* ④ 岗位技能标准与人岗匹配度（一段标准表 + 一段匹配度表） */
+  /* ④ 岗位技能标准与人岗匹配度（只针对熟练度项） */
   const s4 = [['一、岗位技能标准（各岗位对各技能项的期望等级）'],
-              ['岗位', ...SKILLS, '达标人数/总人数']];
+              ['岗位', ...LS, '达标人数/总人数']];
   Object.keys(state.standards).forEach(po=>{
     const f = postFit(people, po);
-    s4.push([po, ...SKILLS.map(s=>LV(state.standards[po][s]||0).name),
+    s4.push([po, ...LS.map(s=>LV(state.standards[po][s]||0).name),
              f.total ? (f.hit + '/' + f.total) : '—']);
   });
-  s4.push([], ['二、人岗匹配度'], ['姓名','岗位', ...SKILLS, '匹配度','待补强技能']);
+  s4.push([], ['二、人岗匹配度'], ['姓名','岗位', ...LS, ...TS.map(s=>s + '（文字录入）'), '匹配度','待补强技能']);
   people.slice().sort((a,b)=>matchRate(b).rate - matchRate(a).rate).forEach(p=>{
     const m = matchRate(p);
     const gaps = m.gaps.map(t=>`${t.skill}（${LV(t.cur).name} → 需 ${LV(t.need).name}）`);
-    s4.push([p.name, p.post||'', ...SKILLS.map(s=>LV(p.skills[s]||0).name),
+    s4.push([p.name, p.post||'', ...LS.map(s=>LV(p.skills[s]||0).name),
+             ...TS.map(s=>(p.notes||{})[s] || ''),
              m.rate + '%', m.std ? (gaps.length ? gaps.join('；') : '全部达标') : '未设标准']);
   });
   s4.push([], ['说明','匹配度 = Σ min(当前等级, 期望等级) ÷ Σ 期望等级。「岗位技能标准」为全局设置，不随支行筛选变化。'],
            ['说明','「达标人数/总人数」统计当前筛选范围内该岗位的人员：总人数为该岗位人数，达标人数为其中「岗位要求的全部技能均已达到期望等级」的人数。'],
            ['说明','待补强技能标注为「技能（当前 → 需达标等级）」。']);
+  if(TS.length) s4.push(['说明','「' + TS.join('、') + '」为文字录入项，不设期望等级、不参与匹配度，仅随人员一并列出。']);
   sheets.push({name:'岗位技能标准与人岗匹配度', aoa:s4,
-               cols:[14, ...SKILLS.map(()=>16), 10, 40]});
+               cols:[14, ...LS.map(()=>16), ...TS.map(()=>34), 10, 40]});
 
   return {sheets, scope};
 }
@@ -1525,7 +1609,12 @@ function exportInsightExcel(){
    ========================================================= */
 function renderSkillControls(){
   const sel = $('#bulkSkill'), cur = sel.value;
-  sel.innerHTML = SKILLS.map(s=>`<option${s===cur?' selected':''}>${esc(s)}</option>`).join('');
+  const LS = levelSkills();
+  sel.innerHTML = LS.length
+    ? LS.map(s=>`<option${s===cur?' selected':''}>${esc(s)}</option>`).join('')
+    : '<option value="">（没有熟练度技能项）</option>';       // 文字录入项不能批量设等级
+  $('#bulkLevel').disabled = !LS.length;
+  $('#btnBulkApply').disabled = !LS.length;
 }
 function renderAll(){
   pageReset();                       // 名单/技能项变化后，三张分页表都回到第 1 页
@@ -1570,7 +1659,7 @@ $('#peopleBody').addEventListener('click', e=>{
   }
 });
 $('#btnAddPerson').onclick = ()=>{
-  state.people.push({id:U(),orgNo:'',orgName:'',branch:'',tellerNo:'',name:'',post:'',skills:{}});
+  state.people.push({id:U(),orgNo:'',orgName:'',branch:'',tellerNo:'',name:'',post:'',skills:{},notes:{}});
   save(); renderAll();
   const wrap = $('#peopleWrap');
   wrap.scrollTop = wrap.scrollHeight;
@@ -1586,13 +1675,22 @@ $('#btnClearAll').onclick = ()=>{
 };
 
 /* --- 技能评分交互 --- */
+/* 文字录入项：直接输入文本，边打边存（父级没有重新渲染，光标不会丢） */
+$('#scoreBody').addEventListener('input', e=>{
+  const inp = e.target.closest('input.note-inp'); if(!inp) return;
+  const p = state.people.find(x=>x.id === inp.dataset.id); if(!p) return;
+  notesOf(p)[inp.dataset.skill] = inp.value;
+  inp.title = inp.value;
+  save();
+  paintScoreProgress(filteredForScore());
+});
 $('#scoreBody').addEventListener('click', e=>{
   const go = e.target.closest('[data-goto]');
   if(go){
     document.querySelector('.tab[data-tab="people"]').click();
     return;
   }
-  const cell = e.target.closest('.sc-cell'); if(!cell) return;
+  const cell = e.target.closest('.sc-cell'); if(!cell) return;   // 文字录入格不是 .sc-cell，不会走到这里
   const p = state.people.find(x=>x.id === cell.dataset.id); if(!p) return;
   const s = cell.dataset.skill;
   const cur = p.skills[s]||0;
@@ -1650,6 +1748,7 @@ $('#btnBulkApply').onclick = ()=>{
   const list = filteredForScore();
   if(!list.length){ alert('当前筛选结果为空'); return; }
   const s = $('#bulkSkill').value, v = parseInt($('#bulkLevel').value,10);
+  if(!s || skillKind(s) === 'text'){ toast('批量设置只针对熟练度技能项'); return; }
   if(!confirm(`将 ${list.length} 人的「${s}」统一设置为「${LV(v).name}」？`)) return;
   list.forEach(p=>{ p.skills[s] = v; });
   save(); renderScore(); renderMatrix(); renderInsight();
@@ -1657,6 +1756,10 @@ $('#btnBulkApply').onclick = ()=>{
 $('#scoreTable').addEventListener('click', e=>{
   const th = e.target.closest('th.skcol'); if(!th) return;   // 表头点击 = 整列设置（表头动态生成，用委托）
   const s = th.dataset.col;
+  if(skillKind(s) === 'text'){                               // 文字录入项没有等级可设
+    toast('「' + s + '」是文字录入项，不设熟练度等级，请逐人填写文字内容');
+    return;
+  }
   const list = filteredForScore();
   if(!list.length) return;
   const v = prompt(`将筛选出的 ${list.length} 人的「${s}」统一设为：\n0=未掌握　1=待培养　2=胜任　3=精通`, '2');
@@ -1703,7 +1806,7 @@ const skillMask = $('#skillMask');
 let skillDraft = [];        // [{orig, name}]  orig = 该行原本的技能名，空串代表新增
 
 function openSkillManager(){
-  skillDraft = SKILLS.map(s=>({orig:s, name:s}));
+  skillDraft = SKILLS.map(s=>({orig:s, name:s, kind:skillKind(s)}));
   renderSkillDraft();
   $('#bulkBox').style.display = 'none';
   $('#btnSkillBulk').classList.remove('primary');
@@ -1711,14 +1814,28 @@ function openSkillManager(){
   skillMask.classList.add('on');
 }
 function renderSkillDraft(){
-  $('#skillTable').innerHTML = '<tbody>' + skillDraft.map((d,i)=>{
-    const used    = d.orig ? state.people.filter(p=>(p.skills[d.orig]||0) > 0).length : 0;
-    const stdUsed = d.orig ? Object.keys(state.standards).filter(po=>(((state.standards[po]||{})[d.orig])||0) > 0).length : 0;
+  $('#skillTable').innerHTML = `<thead><tr>
+      <th class="ord"></th>
+      <th>技能名称</th>
+      <th style="width:132px">录入方式</th>
+      <th style="width:110px">录入情况</th>
+      <th style="width:120px" title="该技能项被多少个岗位设为要求等级">岗位标准</th>
+      <th style="width:108px"></th>
+    </tr></thead><tbody>` + skillDraft.map((d,i)=>{
+    const isText  = d.kind === 'text';
+    const used    = d.orig ? state.people.filter(p=>hasEntry(p, d.orig)).length : 0;
+    const stdUsed = (d.orig && !isText) ? Object.keys(state.standards).filter(po=>(((state.standards[po]||{})[d.orig])||0) > 0).length : 0;
     return `<tr data-i="${i}">
       <td class="ord">${i+1}</td>
-      <td><input type="text" class="sk-name" data-i="${i}" value="${esc(d.name)}" placeholder="技能名称，如：外汇业务"></td>
-      <td style="width:120px;color:var(--muted);font-size:12px">${d.orig ? `已评分 ${used} 人` : '<b style="color:#2f9de8">新增</b>'}</td>
-      <td style="width:132px;color:var(--muted);font-size:12px">${d.orig ? `岗位标准 ${stdUsed} 处` : '—'}</td>
+      <td><input type="text" class="sk-name" data-i="${i}" value="${esc(d.name)}" placeholder="技能名称，如：外汇业务 / 员工优缺点"></td>
+      <td style="width:132px">
+        <select class="sk-kind" data-i="${i}">
+          <option value="level"${isText?'':' selected'}>熟练度评分</option>
+          <option value="text"${isText?' selected':''}>文字录入</option>
+        </select>
+      </td>
+      <td style="width:110px;color:var(--muted);font-size:12px">${d.orig ? `${isText?'已填写':'已评分'} ${used} 人` : '<b style="color:#2f9de8">新增</b>'}</td>
+      <td style="width:120px;color:var(--muted);font-size:12px">${isText ? '<span style="color:#94a3b8">不参与</span>' : (d.orig ? `岗位标准 ${stdUsed} 处` : '—')}</td>
       <td style="width:108px;white-space:nowrap;text-align:right">
         <button class="btn ghost sm" data-mv="up"   data-i="${i}" title="上移">↑</button>
         <button class="btn ghost sm" data-mv="down" data-i="${i}" title="下移">↓</button>
@@ -1726,7 +1843,8 @@ function renderSkillDraft(){
       </td>
     </tr>`;
   }).join('') + '</tbody>';
-  $('#skillCount').textContent = `共 ${skillDraft.length} 项技能`;
+  $('#skillCount').textContent = `共 ${skillDraft.length} 项技能`
+    + (skillDraft.some(d=>d.kind === 'text') ? `（${skillDraft.filter(d=>d.kind === 'text').length} 项文字录入）` : '');
   $('#skillHint').textContent = skillDraft.length > 8
     ? '技能项较多时，评分表与匹配矩阵会横向滚动'
     : '技能项在匹配矩阵里各占一列，建议 4~8 项';
@@ -1748,7 +1866,7 @@ $('#btnManageSkill').onclick = openSkillManager;
 $('#btnSkillCancel').onclick = ()=>{ skillMask.classList.remove('on'); };
 $('#skillMask').addEventListener('click', e=>{ if(e.target === skillMask) skillMask.classList.remove('on'); });
 $('#btnSkillAdd').onclick = ()=>{
-  skillDraft.push({orig:'', name:''});
+  skillDraft.push({orig:'', name:'', kind:'level'});
   renderSkillDraft();
   const inp = $('#skillTable').querySelector('input[data-i="' + (skillDraft.length-1) + '"]');
   if(inp) inp.focus();
@@ -1764,7 +1882,7 @@ function splitCells(line){
   const ok = cells.filter(c=>c
     && !/^\d+$/.test(c)                          // 纯序号列（截图里那一列 6/7/8…）
     && !/^\d+\s*(人|处)$/.test(c)                // 0 人 / 0 处
-    && !/(已评分|岗位标准|未评分)/.test(c)        // 备注列
+    && !/(已评分|已填写|岗位标准|未评分)/.test(c)   // 备注列
     && !/^[—–\-↑↓✕×*·]+$/.test(c));              // 行尾的操作图标
   return ok.length ? ok[0] : '';
 }
@@ -1829,10 +1947,10 @@ $('#btnBulkOk').onclick = ()=>{
     bulkMsg('这 ' + list.length + ' 项在列表里都已存在，未新增。', 'err');
     return;
   }
-  add.forEach(n=>skillDraft.push({orig:'', name:n}));
+  add.forEach(n=>skillDraft.push({orig:'', name:n, kind:'level'}));
   renderSkillDraft();
 
-  const parts = ['已加入 ' + add.length + ' 项新技能'];
+  const parts = ['已加入 ' + add.length + ' 项新技能（默认为「熟练度评分」，需要文字录入的可在列表里逐项切换）'];
   if(skip.length) parts.push('跳过已存在 ' + skip.length + ' 项（' + skip.slice(0,3).join('、') + (skip.length > 3 ? '…' : '') + '）');
   if(dup.length)  parts.push('批内重复 ' + dup.length + ' 项（' + [...new Set(dup)].slice(0,3).join('、') + ([...new Set(dup)].length > 3 ? '…' : '') + '）');
   bulkMsg(parts.join('，') + '　—— 确认无误后点右下「应用变更」生效。', 'ok');
@@ -1845,6 +1963,13 @@ $('#btnBulkOk').onclick = ()=>{
 $('#skillTable').addEventListener('input', e=>{
   const inp = e.target.closest('input.sk-name'); if(!inp) return;
   skillDraft[parseInt(inp.dataset.i,10)].name = inp.value;   // 只改草稿，不重渲染，保住输入光标
+});
+/* 技能项类型：熟练度评分 / 文字录入。改了要立刻重渲染，好让「已评分 N 人 / 不参与」那两列跟着变 */
+$('#skillTable').addEventListener('change', e=>{
+  const sel = e.target.closest('select.sk-kind'); if(!sel) return;
+  const d = skillDraft[parseInt(sel.dataset.i,10)]; if(!d) return;
+  d.kind = sel.value === 'text' ? 'text' : 'level';
+  renderSkillDraft();
 });
 $('#skillTable').addEventListener('keydown', e=>{
   if(e.key === 'Enter' && e.target.closest('input.sk-name')){ e.preventDefault(); $('#btnSkillAdd').click(); }
@@ -1863,7 +1988,7 @@ $('#skillTable').addEventListener('click', e=>{
 });
 
 $('#btnSkillSave').onclick = ()=>{
-  const final = skillDraft.map(d=>({orig:d.orig, name:d.name.trim()}));
+  const final = skillDraft.map(d=>({orig:d.orig, name:d.name.trim(), kind:d.kind === 'text' ? 'text' : 'level'}));
   if(!final.length){ alert('至少保留一项技能。'); return; }
   if(final.some(f=>!f.name)){ alert('技能名称不能为空：请填写该行，或点 ✕ 删除它。'); return; }
   const dup = final.map(f=>f.name).filter((v,i,a)=>a.indexOf(v) !== i);
@@ -1873,43 +1998,64 @@ $('#btnSkillSave').onclick = ()=>{
   const removed = SKILLS.filter(s=>!kept.has(s));
   const renamed = final.filter(f=>f.orig && f.orig !== f.name);
   const added   = final.filter(f=>!f.orig);
+  /* 类型变化：文字录入 ⇄ 熟练度评分（只看没改名、没删掉的那些） */
+  const retyped = final.filter(f=>f.orig && f.kind !== skillKind(f.orig));
 
   if(removed.length){
-    const affected = state.people.filter(p=>removed.some(s=>(p.skills[s]||0) > 0)).length;
+    const affected = state.people.filter(p=>removed.some(s=>hasEntry(p, s))).length;
     let msg = '将删除技能项：' + removed.join('、') + '。\n';
-    if(affected) msg += `\n有 ${affected} 人在这些技能上已录入评分，将一并清除。\n`;
+    if(affected) msg += `\n有 ${affected} 人在这些技能上已录入内容，将一并清除。\n`;
     msg += '\n此操作不可撤销，确定继续？';
     if(!confirm(msg)) return;
   }
+  if(retyped.length){
+    const toText = retyped.filter(f=>f.kind === 'text');
+    let msg = '将改变技能项的录入方式：\n'
+      + retyped.map(f=>`　· ${f.name}：${KIND_NAME[skillKind(f.orig)]} → ${KIND_NAME[f.kind]}`).join('\n') + '\n\n';
+    if(toText.length){
+      const hit = state.people.filter(p=>toText.some(f=>hasEntry(p, f.orig))).length;
+      msg += `改为「文字录入」后不再计入综合得分、匹配矩阵与人岗匹配度`
+        + (hit ? `，有 ${hit} 人已录的熟练度将不再参与计算（**数据保留**，切回熟练度评分即恢复）` : '') + '。\n\n';
+    }
+    msg += '确定继续？';
+    if(!confirm(msg)) return;
+  }
 
-  // 1) 改名：个人评分与岗位标准的键同步迁移，数据不丢
+  // 1) 改名：个人评分 / 文字内容 / 岗位标准的键同步迁移，数据不丢
   renamed.forEach(({orig, name})=>{
     state.people.forEach(p=>{
       if(Object.prototype.hasOwnProperty.call(p.skills, orig)){ p.skills[name] = p.skills[orig]; delete p.skills[orig]; }
+      if(p.notes && Object.prototype.hasOwnProperty.call(p.notes, orig)){ p.notes[name] = p.notes[orig]; delete p.notes[orig]; }
     });
     Object.keys(state.standards).forEach(po=>{
       const st = state.standards[po];
       if(st && Object.prototype.hasOwnProperty.call(st, orig)){ st[name] = st[orig]; delete st[orig]; }
     });
   });
-  // 2) 删除：连同评分与岗位标准里的键一起清掉
+  // 2) 删除：连同评分 / 文字内容 / 岗位标准里的键一起清掉
   removed.forEach(s=>{
-    state.people.forEach(p=>{ delete p.skills[s]; });
+    state.people.forEach(p=>{ delete p.skills[s]; if(p.notes) delete p.notes[s]; });
     Object.keys(state.standards).forEach(po=>{ if(state.standards[po]) delete state.standards[po][s]; });
   });
-  // 3) 生效
+  // 3) 生效（类型先落库，再让 ensureMeta 按新类型清理岗位标准）
   SKILLS = final.map(f=>f.name);
   state.skillList = SKILLS.slice();
-  ensureStdSkills();          // 新增技能：岗位标准补 0（＝该岗位不要求），由用户在 ④ 里按需调整
+  state.skillTypes = {};
+  final.forEach(f=>{ if(f.kind === 'text') state.skillTypes[f.name] = 'text'; });
+  ensureMeta();               // 新增技能：岗位标准补 0（＝该岗位不要求），由用户在 ④ 里按需调整
   save(); renderAll();
   skillMask.classList.remove('on');
 
   const parts = [];
-  if(added.length)   parts.push('新增 ' + added.map(a=>a.name).join('、'));
-  if(renamed.length) parts.push('改名 ' + renamed.map(r=>r.orig + ' → ' + r.name).join('、'));
-  if(removed.length) parts.push('删除 ' + removed.join('、'));
+  if(added.length)    parts.push('新增 ' + added.map(a=>a.name).join('、'));
+  if(renamed.length)  parts.push('改名 ' + renamed.map(r=>r.orig + ' → ' + r.name).join('、'));
+  if(removed.length)  parts.push('删除 ' + removed.join('、'));
+  if(retyped.length)  parts.push('改为' + retyped.map(f=>KIND_NAME[f.kind]).filter((v,i,a)=>a.indexOf(v)===i).join('/')
+                                + ' ' + retyped.map(f=>f.name).join('、'));
+  const addedLevel = added.filter(a=>a.kind !== 'text').length;
   toast(parts.length
-    ? '技能项已更新：' + parts.join('；') + (added.length ? '（请在「④ 分析洞察」设置新技能项的岗位要求）' : '')
+    ? '技能项已更新：' + parts.join('；')
+      + (addedLevel ? '（请在「④ 分析洞察」设置新技能项的岗位要求）' : '')
     : '技能项未发生变化');
 };
 
@@ -2211,8 +2357,9 @@ $('#btnLoadDemo').onclick = ()=>{
     state.people = [];
     state.skillList = DEFAULT_SKILLS.slice();
     SKILLS = state.skillList.slice();
+    state.skillTypes = {};
     state.standards = JSON.parse(JSON.stringify(DEFAULT_STD));
-    ensureStdSkills();
+    ensureMeta();
   }
   renderAll();
   renderTplInfo();

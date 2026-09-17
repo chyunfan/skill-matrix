@@ -281,6 +281,15 @@ textarea.paste{
 .skmgr tbody tr:last-child td{border-bottom:none}
 .skmgr input[type=text]{width:100%;padding:5px 8px}
 .skmgr .ord{color:var(--faint);width:30px}
+/* 技能项：批量文本录入 */
+.bulkbox{margin-top:10px;border:1px solid var(--line);border-radius:8px;background:#f8fafd;padding:10px 12px}
+.bulkbox .bh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:7px;font-size:13px;font-weight:600}
+.bulkbox .bh .hintline{font-weight:400}
+.bulkbox textarea{width:100%;height:104px;resize:vertical;font-size:13px;line-height:1.8}
+.bulkbox .bf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.bulkbox .bf .spacer{flex:1}
+.bulkbox .bf .hintline[data-t="ok"]{color:var(--ok)}
+.bulkbox .bf .hintline[data-t="err"]{color:var(--danger)}
 /* 轻提示 */
 .toast{
   position:fixed;left:50%;bottom:34px;transform:translateX(-50%);
@@ -525,11 +534,11 @@ textarea.paste{
       <p style="padding-left:16px;color:var(--muted)">必输：<b>机构号、柜员号、姓名</b>（缺少姓名的人员不会被导入；缺机构号/柜员号无法按柜员号去重定位）<br>选填：机构名称、支行、岗位（缺岗位无法测算人岗匹配度，缺支行不影响矩阵生成但无法按支行分组）</p>
       <p>填好后上传文件，或直接从 Excel 全选复制、粘贴到文本框。系统按表头名称自动识别各列，列顺序可调整；识别不准时可在"列映射"中手动改。</p>
       <p><b>② 技能评分</b>　在"技能评分"页点击单元格录入熟练度。单击循环切换：<span class="pill" style="background:#f1f5f9;color:#94a3b8">未掌握</span> → <span class="pill" style="background:#a8bcd4;color:#fff">待培养</span> → <span class="pill" style="background:#2f9de8;color:#fff">胜任</span> → <span class="pill" style="background:#1553a8;color:#fff">精通</span>。右键降一级，Shift+单击清空。右上角可用"批量设置"一次性给筛选出的人员赋等级。</p>
-      <p style="padding-left:16px;color:var(--muted)"><b>技能项可自主增减</b>：默认是柜面业务 / 社保业务 / 理财辅助 / 对公业务，点右上角<b>「⚙ 技能项管理」</b>可以新增（如"外汇业务""信贷调查"）、改名、删除或调整列顺序。改名会保留原有评分；删除会一并清除该项的评分（有二次确认）。新增技能项后，记得去「④ 分析洞察」设置各岗位对它的要求等级。</p>
+      <p style="padding-left:16px;color:var(--muted)"><b>技能项可自主增减</b>：默认是柜面业务 / 社保业务 / 理财辅助 / 对公业务，点右上角<b>「⚙ 技能项管理」</b>可以新增（如"外汇业务""信贷调查"）、改名、删除或调整列顺序。<b>技能项多时用「⇥ 批量文本录入」</b>一次粘一批：一行一个，也支持用「、，,；;」分隔，或直接从 Excel 粘一列（自动跳过序号列和"已评分 N 人"备注列）。改名会保留原有评分；删除会一并清除该项的评分（有二次确认）。新增技能项后，记得去「④ 分析洞察」设置各岗位对它的要求等级。</p>
       <p><b>③ 匹配矩阵</b>　自动生成团队技能匹配矩阵图，可切换分组维度（支行 / 机构 / 岗位）与排序方式，点<b>导出图片 PNG</b> 直接得到可贴进汇报材料的图片。</p>
       <p><b>④ 分析洞察</b>　查看技能分布、人员排名；在"岗位技能标准"中设定各岗位的期望等级后，会自动算出每个人对其岗位的<b>匹配度</b>并列出未达标技能。标准表末列的<b>「达标 / 总人数」</b>形如 <b>4/5</b>，表示该岗位有 5 人、其中 4 人的全部技能都已达到岗位要求（按上方各技能的期望等级判定）。<br>
       顶部可按<b>支行</b>筛选：切换后，团队人数/录入完成度等指标、技能画像、成员排名、人岗匹配度都会只统计该支行的人员（右上角显示"该支行 N / 全部 M 人"）。岗位技能标准是全局设置，不随筛选变化；该筛选与「② 技能评分」的筛选相互独立。<br>
-      团队成员技能排名、岗位技能标准、人岗匹配度三张表<b>分页显示</b>（默认每页 15 / 20 / 20 条），分页条右侧可直接改每页条数。切换支行或导入名单后自动回到第 1 页；<b>导出 Excel 与打印都输出全部人员</b>，不受分页影响（打印时会自动展开全部行）。<br>
+      团队成员技能排名、岗位技能标准、人岗匹配度三张表<b>分页显示</b>（岗位技能标准与人岗匹配度默认每页 20 条；<b>团队成员技能排名的条数会自动对齐左侧「团队技能画像」的高度</b>，好让两栏齐平、不给左栏留一大片空白），分页条右侧可直接改每页条数 —— 排名的手改过之后就固定用你设的值，切换支行或重新导入名单再恢复自动对齐。切换支行或导入名单后自动回到第 1 页；<b>导出 Excel 与打印都输出全部人员</b>，不受分页影响（打印时会自动展开全部行）。<br>
       点右上角<b>「导出 Excel」</b>可把当前筛选范围内的分析结果导出为 4 个工作表：<b>数据统计 / 团队技能画像 / 团队成员技能排名 / 岗位技能标准与人岗匹配度</b>。文件名会自动带上支行名与日期（如「团队技能分析-富春支行-20260914.xlsx」）。离线取不到 Excel 组件时会自动改导出 `.xls` 格式（工作表结构一致，Excel 打开若提示格式选"是"即可）。</p>
       <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
       <p style="color:var(--muted)">数据保存在本机浏览器（localStorage），不上传任何服务器。清除浏览器数据会导致内容丢失，重要数据请及时导出。</p>
@@ -547,7 +556,21 @@ textarea.paste{
       <table class="skmgr" id="skillTable"><tbody></tbody></table>
       <div style="display:flex;gap:10px;align-items:center;margin:12px 0 2px;flex-wrap:wrap">
         <button class="btn sm" id="btnSkillAdd">＋ 添加技能项</button>
+        <button class="btn sm" id="btnSkillBulk">⇥ 批量文本录入</button>
         <span class="hintline" id="skillHint"></span>
+      </div>
+      <div class="bulkbox" id="bulkBox" style="display:none">
+        <div class="bh">批量文本录入
+          <span class="hintline">每行一个技能名；也支持用 、 ， , ； ; 分隔，或直接从 Excel 粘一列（自动跳过序号与"已评分 N 人"等备注列）</span>
+        </div>
+        <textarea id="bulkText" placeholder="例：存取款&#10;政企业务&#10;支付结算&#10;账户业务&#10;反洗钱反电诈"></textarea>
+        <div class="bf">
+          <span class="hintline" id="bulkMsg"></span>
+          <div class="spacer"></div>
+          <button class="btn ghost sm" id="btnBulkClear">清空</button>
+          <button class="btn sm" id="btnBulkClose">收起</button>
+          <button class="btn sm primary" id="btnBulkOk">添加到列表</button>
+        </div>
       </div>
       <div class="warnbox" style="margin:14px 0 0">
         <b>注意事项</b><br>
@@ -620,10 +643,11 @@ const U = () => 'p' + (uid++) + '_' + Math.random().toString(36).slice(2,7);
    分页（团队成员排名 / 岗位技能标准 / 人岗匹配度）
    步长各自独立，工具栏上的「每页 N」可随时改；不持久化，刷新回到默认值
    ========================================================= */
-const PAGE_DEF = {rank:15, std:20, match:20};   // 默认步长
+const PAGE_DEF = {rank:15, std:20, match:20};   // 默认步长（rank 仅在量不到高度时兜底，正常由 rankFitRows 自动算）
 const PAGE_MIN = 1, PAGE_MAX = 500;
 const pageState = {};
 Object.keys(PAGE_DEF).forEach(k => { pageState[k] = {no:1, size:PAGE_DEF[k]}; });
+let rankAutoSize = true;        // 排名列表的每页条数是否还跟随左栏高度自动适配（用户手改过就置 false）
 let printMode = false;          // 打印时临时展开全部行，分页只作用于屏幕
 
 /* 取某张表的当前页；页码越界时自动收敛到最后一页 */
@@ -638,8 +662,11 @@ function pageSlice(key, list){
   return { rows: list.slice(from, from + size), from, to: Math.min(from + size, total),
            pages, no: st.no, size, total };
 }
-/* 数据源变化时回到第 1 页 */
-function pageReset(){ Object.keys(pageState).forEach(k => { pageState[k].no = 1; }); }
+/* 数据源变化时回到第 1 页，并恢复排名的自动适配（用户没再手改就继续跟左栏对齐） */
+function pageReset(){
+  Object.keys(pageState).forEach(k => { pageState[k].no = 1; });
+  rankAutoSize = true;
+}
 
 /* 打印时临时展开全部行：分页只影响屏幕，打印/导出仍是完整数据 */
 function setPrintMode(on){
@@ -671,6 +698,26 @@ function pagerBar(key, p, unit){
     ${nav}
     <label class="pg-size">每页 <input type="number" class="pg-num" data-psize="${key}" value="${p.size}" min="${PAGE_MIN}" max="${PAGE_MAX}"> ${unit}</label>
   </div>`;
+}
+
+/* 排名列表的默认每页条数：让右栏高度对齐左栏「团队技能画像」，避免左栏下方留一大片空白、两栏一高一矮。
+   做法是**实测**而不是估算式：先按当前条数渲染一遍，量出「一行占位」和「分页条 + 上下内边距」的固定开销，
+   再反推能放几行。这样以后调 CSS（行距 / 字号 / 分页条样式 / 内边距）都不用回来改常量。 */
+function fitRankSize(list, target, htmlOf){
+  const host = $('#memberRank');
+  if(!host || !(target > 60) || list.length < 2) return PAGE_DEF.rank;   // 量不到（面板隐藏）→ 回落默认值
+  const st = pageState.rank;
+  const size0 = Math.max(3, st.size);
+  st.size = size0;
+  host.innerHTML = htmlOf(pageSlice('rank', list));                     // 试渲染一遍，只为量尺寸
+  const rows = host.querySelectorAll('.rank-row');
+  if(rows.length < 2) return size0;                                     // 人太少，量不出行距 → 不动
+  const r0 = rows[0].getBoundingClientRect(), r1 = rows[1].getBoundingClientRect();
+  const pitch = r1.top - r0.top;                                        // 一行占位（含行间距）
+  if(!(pitch > 10)) return size0;
+  /* 总高 = 固定开销 + 行数 × 行距，固定开销与行数无关（末行行距与分页条上间距合并、上下内边距恒定） */
+  const overhead = host.getBoundingClientRect().height - rows.length * pitch;
+  return Math.max(3, Math.min(PAGE_MAX, Math.round((target - overhead) / pitch)));
 }
 
 /* ---------- 存储 ---------- */
@@ -1198,12 +1245,11 @@ function renderInsight(){
       </div></div>`;
   }).join('') : `<div class="empty">${emptyTip}</div>`;
 
-  // 成员排名（分页，默认步长 15，可在分页条上修改）
+  // 成员排名（分页；默认每页条数自动对齐左栏技能画像的高度，用户改过之后就不再自动调整）
   const rankAll = people.slice().sort((a,b)=>scoreOf(b)-scoreOf(a));
   const max = Math.max(maxScore(), rankAll.length ? scoreOf(rankAll[0]) : 1);   // 空集时 rankAll[0] 为 undefined，不能直接 scoreOf
   if(n){
-    const pg = pageSlice('rank', rankAll);
-    $('#memberRank').innerHTML = pg.rows.map((p,i)=>{
+    const rankHtml = pg => pg.rows.map((p,i)=>{
       const sc = scoreOf(p);
       const pct = Math.round(sc / max * 100);
       return `<div class="rank-row">
@@ -1213,6 +1259,12 @@ function renderInsight(){
         <span class="sc">${sc} / ${maxScore()}</span>
       </div>`;
     }).join('') + pagerBar('rank', pg, '人');
+    if(rankAutoSize && !printMode){
+      // 目标高度 = 左栏卡片正文的高度（两栏都是 .card-body，内边距一致，可直接比高度）
+      // 打印模式下列表已经被展开成全部行，量高度没有意义，跳过
+      pageState.rank.size = fitRankSize(rankAll, $('#skillBars').getBoundingClientRect().height, rankHtml);
+    }
+    $('#memberRank').innerHTML = rankHtml(pageSlice('rank', rankAll));
   } else {
     $('#memberRank').innerHTML = `<div class="empty">${all ? '当前支行没有人员，请切换筛选条件' : '暂无数据'}</div>`;
   }
@@ -1590,6 +1642,7 @@ $('#panel-insight').addEventListener('change', e=>{
   if(isNaN(v)){ renderInsight(); return; }         // 非法输入 → 回填当前值
   st.size = Math.min(PAGE_MAX, Math.max(PAGE_MIN, v));
   st.no = 1;                                        // 改步长后回到第 1 页
+  if(inp.dataset.psize === 'rank') rankAutoSize = false;   // 用户手改过 → 不再按左栏高度自动适配
   renderInsight();
 });
 $('#bulkLevel').innerHTML = LEVELS.map(L=>`<option value="${L.v}">${L.name}</option>`).join('');
@@ -1652,6 +1705,9 @@ let skillDraft = [];        // [{orig, name}]  orig = 该行原本的技能名�
 function openSkillManager(){
   skillDraft = SKILLS.map(s=>({orig:s, name:s}));
   renderSkillDraft();
+  $('#bulkBox').style.display = 'none';
+  $('#btnSkillBulk').classList.remove('primary');
+  bulkMsg('');
   skillMask.classList.add('on');
 }
 function renderSkillDraft(){
@@ -1697,6 +1753,94 @@ $('#btnSkillAdd').onclick = ()=>{
   const inp = $('#skillTable').querySelector('input[data-i="' + (skillDraft.length-1) + '"]');
   if(inp) inp.focus();
   $('#skillTable').parentElement.scrollTop = 9999;
+};
+
+/* ---------- 批量文本录入 ---------- */
+/* 一行一个技能名；兼容「从 Excel 整行粘贴」与「顿号/逗号一行多个」两种输入习惯 */
+function splitCells(line){
+  const cells = String(line).split('\t').map(s=>s.trim());
+  if(cells.length === 1) return cells[0];
+  // 整行粘贴时，剔掉序号列与「已评分 0 人 / 岗位标准 0 处」这类备注列，取第一个像名称的单元格
+  const ok = cells.filter(c=>c
+    && !/^\d+$/.test(c)                          // 纯序号列（截图里那一列 6/7/8…）
+    && !/^\d+\s*(人|处)$/.test(c)                // 0 人 / 0 处
+    && !/(已评分|岗位标准|未评分)/.test(c)        // 备注列
+    && !/^[—–\-↑↓✕×*·]+$/.test(c));              // 行尾的操作图标
+  return ok.length ? ok[0] : '';
+}
+function tidyName(s){
+  return String(s)
+    .replace(/^[（(]\s*\d+\s*[)）]\s*/, '')          // (1) 1）
+    .replace(/^\d+\s*[.、:：)）]\s*/, '')            // 1.  1、 1:  1)
+    .replace(/^[-–—•*·◦]+\s*/, '')                  // 项目符号
+    .replace(/[\s\u3000]+/g, ' ')
+    .trim();
+}
+/* 返回 {list:[名称…], dup:[批内重复…]} */
+function parseSkillText(text){
+  const list = [], dup = [], seen = Object.create(null);
+  String(text || '').split(/\r?\n/).forEach(line=>{
+    const cell = splitCells(line);
+    if(!cell) return;
+    /* 先剥掉行首的序号/项目符号，再按分隔符拆 —— 反过来的话「2、政企业务」会被拆成「2」和「政企业务」 */
+    tidyName(cell).split(/[、，,；;]/).forEach(raw=>{
+      const name = tidyName(raw);
+      if(!name || /^\d+$/.test(name)) return;      // 只剩下数字的（多为残留的序号）直接丢掉
+      if(seen[name]){ dup.push(name); return; }
+      seen[name] = 1;
+      list.push(name);
+    });
+  });
+  return {list, dup};
+}
+function bulkMsg(txt, type){
+  const el = $('#bulkMsg');
+  el.textContent = txt || '';
+  if(type) el.dataset.t = type; else delete el.dataset.t;
+}
+$('#btnSkillBulk').onclick = ()=>{
+  const box = $('#bulkBox');
+  const open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  $('#btnSkillBulk').classList.toggle('primary', !open);
+  if(!open){
+    bulkMsg('');
+    const ta = $('#bulkText');
+    ta.focus();
+    ta.scrollIntoView({ block:'nearest' });
+  }
+};
+$('#btnBulkClose').onclick = ()=>{ $('#bulkBox').style.display = 'none'; $('#btnSkillBulk').classList.remove('primary'); };
+$('#btnBulkClear').onclick = ()=>{ $('#bulkText').value = ''; bulkMsg(''); $('#bulkText').focus(); };
+$('#bulkText').addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); $('#btnBulkOk').click(); }
+});
+$('#btnBulkOk').onclick = ()=>{
+  const ta = $('#bulkText');
+  const {list, dup} = parseSkillText(ta.value);
+  if(!list.length){ bulkMsg('没解析出技能名称，请检查输入内容。', 'err'); return; }
+
+  const have = Object.create(null);
+  skillDraft.forEach(d=>{ const n = String(d.name || '').trim(); if(n) have[n] = 1; });
+  const add = [], skip = [];
+  list.forEach(n=>{ if(have[n]) skip.push(n); else { have[n] = 1; add.push(n); } });
+
+  if(!add.length){
+    bulkMsg('这 ' + list.length + ' 项在列表里都已存在，未新增。', 'err');
+    return;
+  }
+  add.forEach(n=>skillDraft.push({orig:'', name:n}));
+  renderSkillDraft();
+
+  const parts = ['已加入 ' + add.length + ' 项新技能'];
+  if(skip.length) parts.push('跳过已存在 ' + skip.length + ' 项（' + skip.slice(0,3).join('、') + (skip.length > 3 ? '…' : '') + '）');
+  if(dup.length)  parts.push('批内重复 ' + dup.length + ' 项（' + [...new Set(dup)].slice(0,3).join('、') + ([...new Set(dup)].length > 3 ? '…' : '') + '）');
+  bulkMsg(parts.join('，') + '　—— 确认无误后点右下「应用变更」生效。', 'ok');
+  ta.value = '';
+  ta.focus();
+  $('#skillTable').parentElement.scrollTop = 9999;
+  /* 这里刻意不弹 toast：toast 固定在底部居中，会盖住弹窗自己的「应用变更」按钮，
+     而上方那行绿色提示已经足够，且会一直留到用户下一步操作。 */
 };
 $('#skillTable').addEventListener('input', e=>{
   const inp = e.target.closest('input.sk-name'); if(!inp) return;

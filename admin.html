@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>用户管理 · 人岗匹配矩阵工具</title>
+<style>
+:root{
+  --bg:#f4f6f9; --card:#ffffff; --line:#e3e8ef; --line2:#cfd8e3;
+  --text:#1e293b; --muted:#64748b; --faint:#94a3b8;
+  --primary:#1c5fb0; --primary-d:#154c8f; --primary-l:#e8f1fb;
+  --l3:#1553a8; --l2:#2f9de8; --l1:#a8bcd4; --l0:#f1f5f9;
+  --danger:#c0392b; --danger-l:#fdf1f0; --ok:#1f8a5b; --ok-l:#eef8f3;
+  --warn:#b7791f; --warn-l:#fdf6ec;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);min-height:100vh;
+  font:14px/1.55 "Microsoft YaHei","PingFang SC","Hiragino Sans GB","Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+/* ---------------------------------------------------------- 顶栏 ---- */
+.topbar{
+  height:54px;background:#fff;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;padding:0 20px;position:sticky;top:0;z-index:20;
+}
+.topbar .dot{width:9px;height:9px;border-radius:2px;background:var(--l3)}
+.topbar h1{font-size:16px;font-weight:700;letter-spacing:.4px;white-space:nowrap}
+.topbar .sub{color:var(--faint);font-size:12.5px}
+.topbar .sp{flex:1}
+.who{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.who b{color:var(--text);font-weight:600}
+/* ---------------------------------------------------------- 布局 ---- */
+.page{max-width:1220px;margin:0 auto;padding:20px 20px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:18px 20px;margin-bottom:16px}
+.card > h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card > h2 .hint{font-size:12px;color:var(--faint);font-weight:400}
+.card .desc{color:var(--muted);font-size:12.5px;margin-top:5px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.mt{margin-top:12px}
+.hr{height:1px;background:var(--line);margin:16px 0}
+/* --------------------------------------------------------- 控件 ----- */
+button{font-family:inherit;font-size:13px;cursor:pointer;border-radius:4px;border:1px solid var(--line2);
+  background:#fff;color:var(--text);height:32px;padding:0 13px;white-space:nowrap;transition:.12s}
+button:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-l)}
+button:disabled{border-color:var(--line);color:var(--faint);background:#f8fafc;cursor:not-allowed}
+button.pri{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+button.pri:hover{background:var(--primary-d);border-color:var(--primary-d);color:#fff}
+button.pri:disabled{background:var(--l1);border-color:var(--l1);color:#fff}
+button.danger:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-l)}
+button.sm{height:27px;padding:0 9px;font-size:12.5px}
+input[type=text],input[type=password],select,textarea{
+  font-family:inherit;font-size:13.5px;color:var(--text);background:#fff;
+  border:1px solid var(--line2);border-radius:4px;padding:0 10px;height:34px;outline:none;
+}
+input[type=text]:focus,input[type=password]:focus,select:focus,textarea:focus{
+  border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
+textarea{height:132px;padding:8px 10px;line-height:1.6;resize:vertical;width:100%
+}
+label.ck{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text);cursor:pointer;user-select:none}
+label.ck input{margin:0;cursor:pointer}
+/* ---------------------------------------------------------- 表格 ---- */
+.tblbox{border:1px solid var(--line);border-radius:5px;overflow:auto;max-height:62vh;background:#fff}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+th,td{padding:8px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{background:#f8fafc;color:var(--muted);font-weight:600;font-size:12.5px;position:sticky;top:0;z-index:2;
+   border-bottom:1px solid var(--line2)}
+tbody tr:hover{background:#fafcff}
+tbody tr.sel{background:var(--primary-l)}
+tbody tr.sel:hover{background:#dcebfa}
+td.teller{font-variant-numeric:tabular-nums;font-weight:600}
+td.mut{color:var(--faint)}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:3px;margin:1px 4px 1px 0;
+  background:var(--l0);color:var(--muted);border:1px solid var(--line)}
+.tag.b{background:var(--primary-l);color:var(--primary-d);border-color:#cfe0f4}
+.tag.g{background:var(--ok-l);color:var(--ok);border-color:#cfe8dc}
+.tag.o{background:var(--warn-l);color:var(--warn);border-color:#f0e0c4}
+.tag.r{background:var(--danger-l);color:var(--danger);border-color:#f3d3cf}
+.empty{padding:34px;text-align:center;color:var(--faint);font-size:13px}
+/* ------------------------------------------------------- 批量条 ----- */
+.batch{display:none;align-items:center;gap:9px;flex-wrap:wrap;
+  background:var(--primary-l);border:1px solid #cfe0f4;border-radius:5px;padding:9px 12px;margin-bottom:12px}
+.batch.on{display:flex}
+.batch .cnt{font-size:13px;color:var(--primary-d);font-weight:600;margin-right:4px}
+.batch .sep{width:1px;height:20px;background:#cfe0f4}
+/* --------------------------------------------------------- 提示 ----- */
+.msg{font-size:13px;padding:9px 12px;border-radius:4px;display:none;line-height:1.7;white-space:pre-wrap}
+.msg.on{display:block}
+.msg.err{background:var(--danger-l);color:var(--danger);border:1px solid #f3d3cf}
+.msg.ok{background:var(--ok-l);color:var(--ok);border:1px solid #cfe8dc}
+.msg.info{background:var(--primary-l);color:var(--primary-d);border:1px solid #cfe0f4}
+.msg.warn{background:var(--warn-l);color:var(--warn);border:1px solid #f0e0c4}
+/* ------------------------------------------------------ 状态视图 ---- */
+.view{display:none}
+.view.on{display:block}
+.center{max-width:520px;margin:8vh auto;background:#fff;border:1px solid var(--line);border-radius:6px;padding:28px 26px}
+.center h2{font-size:17px;margin-bottom:6px}
+.center .desc{color:var(--muted);font-size:13px;margin-bottom:16px}
+.center .btnrow{display:flex;gap:10px;margin-top:18px}
+.center .btnrow button{flex:1;height:38px}
+.rules{list-style:none;margin:14px 0 0}
+.rules li{font-size:12.5px;color:var(--muted);padding:2px 0 2px 22px;position:relative}
+.rules li::before{content:"○";position:absolute;left:4px;color:var(--faint)}
+.rules li.pass{color:var(--ok)}
+.rules li.pass::before{content:"✓";color:var(--ok);font-weight:700}
+label.f{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+label.f input{width:100%;height:38px}
+/* --------------------------------------------------------- 弹窗 ----- */
+.mask{position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+.mask.on{display:flex}
+.dlg{background:#fff;border-radius:7px;width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;
+  box-shadow:0 12px 40px rgba(15,23,42,.22)}
+.dlg h3{font-size:15.5px;padding:16px 20px 0}
+.dlg .body{padding:12px 20px;overflow:auto;font-size:13.5px;line-height:1.75}
+.dlg .foot{padding:12px 20px 18px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line)}
+.dlg .foot button{height:36px;padding:0 20px}
+.affect{background:#f8fafc;border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin-top:10px;
+  max-height:190px;overflow:auto;font-size:12.5px;line-height:1.9;white-space:pre-wrap;word-break:break-all}
+.pv{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px}
+/* ------------------------------------------------------ 导入预览 ---- */
+.pv-tbl{width:100%;font-size:12.5px;border-collapse:separate;border-spacing:0;margin-top:10px}
+.pv-tbl th,.pv-tbl td{padding:6px 9px;border-bottom:1px solid var(--line)}
+.pv-tbl th{background:#f8fafc;color:var(--muted);font-weight:600;position:static}
+.pv-tbl tr.warnrow td{background:var(--warn-l)}
+.pv-tbl tr.badrow td{background:var(--danger-l)}
+.foot{text-align:center;margin-top:20px;font-size:11.5px;color:var(--faint)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="dot"></span>
+  <h1>用户管理</h1>
+  <span class="sub">人岗匹配矩阵工具 · P1</span>
+  <span class="sp"></span>
+  <span class="who" id="whoBox"></span>
+  <button id="btnReload" style="display:none">刷新</button>
+  <button id="btnOut" style="display:none">退出登录</button>
+</div>
+
+<div class="page">
+
+  <!-- ================= 服务端未就绪 ================= -->
+  <div class="view" id="vSetup">
+    <div class="center">
+      <h2>服务端尚未就绪</h2>
+      <p class="desc" id="setupSub">页面没能连上后端接口</p>
+      <div class="msg err on" id="setupMsg" style="margin-bottom:0"></div>
+      <div class="btnrow"><button id="btnSetupRetry" class="pri">重新检测</button></div>
+    </div>
+  </div>
+
+  <!-- ================= 未登录 ================= -->
+  <div class="view" id="vNeedLogin">
+    <div class="center">
+      <h2>请先登录</h2>
+      <p class="desc">用户管理需要管理员身份，请先登录后再进入本页。</p>
+      <div class="msg info on" id="needLoginMsg" style="margin-bottom:0"></div>
+      <div class="btnrow"><button class="pri" id="btnGoLogin">去登录</button></div>
+    </div>
+  </div>
+
+  <!-- ================= 非管理员 ================= -->
+  <div class="view" id="vNoAuth">
+    <div class="center">
+      <h2>无权访问</h2>
+      <p class="desc">本页仅限管理员使用。如果你认为这是误判，请联系系统管理员核对账号角色。</p>
+      <div class="btnrow">
+        <button class="pri" id="btnNoAuthLogin">切换账号</button>
+        <button id="btnNoAuthOut">退出登录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 首登强制改密 ================= -->
+  <div class="view" id="vPwd">
+    <div class="center">
+      <h2>首次登录 · 请先修改密码</h2>
+      <p class="desc" id="pwdSub">为保障账号安全，必须先设置新密码才能使用系统。</p>
+      <label class="f" for="np1">新密码</label>
+      <input type="password" id="np1" autocomplete="new-password" placeholder="请输入新密码">
+      <label class="f" for="np2">确认新密码</label>
+      <input type="password" id="np2" autocomplete="new-password" placeholder="请再次输入新密码">
+      <ul class="rules" id="ruleList">
+        <li data-r="len">至少 8 位</li>
+        <li data-r="mix">同时包含字母和数字</li>
+        <li data-r="diff">不与柜员号相同</li>
+        <li data-r="seq">不含 3 位以上连续字符（如 123、abc）</li>
+        <li data-r="rep">不含 3 位以上重复字符（如 111、aaa）</li>
+        <li data-r="same">两次输入一致</li>
+      </ul>
+      <div class="msg" id="pwdMsg"></div>
+      <div class="btnrow">
+        <button class="pri" id="btnChange">确认修改</button>
+        <button id="btnPwdOut">退出登录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 主界面 ================= -->
+  <div class="view" id="vMain">
+
+    <!-- ① 导入建号 -->
+    <div class="card">
+      <h2>① 导入建号 <span class="hint">只有清单里的柜员号才能登录，系统没有注册入口</span></h2>
+      <p class="desc">初始密码＝柜员号，首次登录会被强制改密。姓名、支行可留空 —— 系统会自动到人员名单里带出来。</p>
+      <div class="row mt">
+        <button id="btnTpl">下载导入模板</button>
+        <button id="btnPick">选择 Excel / CSV 文件</button>
+        <input type="file" id="file" accept=".xlsx,.xls,.csv,.txt" style="display:none">
+        <span class="hint" id="fileName" style="font-size:12px;color:var(--faint)"></span>
+      </div>
+      <div class="hr"></div>
+      <p class="desc">也可以直接从 Excel 里复制两列（柜员号、姓名）或三列（柜员号、姓名、支行）粘贴到下面：</p>
+      <textarea id="paste" class="mt" placeholder="8051645&#9;周群&#9;总行&#10;8051646&#9;张三&#9;富春支行"></textarea>
+      <div class="row mt">
+        <button class="pri" id="btnParse">识别内容</button>
+        <button id="btnClearImp">清空</button>
+      </div>
+      <div id="impBox" style="display:none">
+        <div class="hr"></div>
+        <div id="impSummary" class="msg info on"></div>
+        <div style="overflow:auto;max-height:280px;border:1px solid var(--line);border-radius:5px">
+          <table class="pv-tbl" id="impTable"></table>
+        </div>
+        <div class="row mt">
+          <button class="pri" id="btnCreate">确认建号</button>
+          <button id="btnCancelImp">取消</button>
+        </div>
+        <div class="msg" id="impResult" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- ② 账号列表 -->
+    <div class="card">
+      <h2>② 账号列表 <span class="hint" id="listHint"></span></h2>
+      <div class="row mt">
+        <input type="text" id="q" placeholder="搜柜员号 / 姓名" style="width:220px">
+        <button id="btnSearch">搜索</button>
+        <button id="btnReset">重置</button>
+      </div>
+
+      <div class="batch mt" id="batch">
+        <span class="cnt" id="batchCnt">已选 0 个账号</span>
+        <span class="sep"></span>
+        <button class="sm" data-preset="admin">套用：全行管理员</button>
+        <button class="sm" data-preset="recorder">套用：支行录入员</button>
+        <button class="sm" data-preset="viewer">套用：只读观察员</button>
+        <span class="sep"></span>
+        <button class="sm" data-act="scope:all">数据范围：全行</button>
+        <button class="sm" data-act="scope:branch">数据范围：本支行</button>
+        <span class="sep"></span>
+        <button class="sm" data-act="edit:true">允许编辑评分</button>
+        <button class="sm" data-act="edit:false">禁止编辑评分</button>
+        <span class="sep"></span>
+        <button class="sm" data-act="pages">设置查看版块…</button>
+        <span class="sep"></span>
+        <button class="sm" data-act="status:active">启用</button>
+        <button class="sm" data-act="status:disabled">停用</button>
+        <span class="sep"></span>
+        <button class="sm" data-act="role:admin">设为管理员</button>
+        <button class="sm" data-act="role:user">取消管理员</button>
+        <span class="sep"></span>
+        <button class="sm danger" data-act="reset">重置密码</button>
+        <button class="sm" id="btnUnsel">取消选择</button>
+      </div>
+
+      <div class="tblbox mt">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th style="width:34px"><input type="checkbox" id="ckAll"></th>
+              <th>柜员号</th><th>姓名</th><th>支行</th><th>角色</th>
+              <th>数据范围</th><th>允许编辑</th><th>查看版块</th><th>状态</th><th>初始密码</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="msg" id="listMsg" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div class="foot">数据存储于 Supabase · 浏览器不持有任何密钥，全部经服务端代理访问</div>
+</div>
+
+<!-- ==================== 确认弹窗 ==================== -->
+<div class="mask" id="mask">
+  <div class="dlg">
+    <h3 id="dlgTitle">确认操作</h3>
+    <div class="body" id="dlgBody"></div>
+    <div class="foot">
+      <button id="dlgNo">取消</button>
+      <button class="pri" id="dlgYes">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 版块设置弹窗 ==================== -->
+<div class="mask" id="maskPv">
+  <div class="dlg">
+    <h3>设置查看版块</h3>
+    <div class="body">
+      勾选的版块会显示在对方界面上（<b>整体授权、整体显隐</b>）。这只控制"看得见什么"，数据边界始终由「数据范围」决定。
+      <div class="pv" id="pvBox">
+        <label class="ck"><input type="checkbox" value="people"> ① 人员名单</label>
+        <label class="ck"><input type="checkbox" value="score"> ② 技能评分</label>
+        <label class="ck"><input type="checkbox" value="matrix"> ③ 匹配矩阵</label>
+        <label class="ck"><input type="checkbox" value="insight"> ④ 分析洞察</label>
+        <label class="ck"><input type="checkbox" value="admin"> ⑤ 用户管理<span style="color:var(--faint)">（仅管理员有效）</span></label>
+      </div>
+      <div class="msg warn" id="pvWarn" style="margin-top:12px"></div>
+    </div>
+    <div class="foot">
+      <button id="pvNo">取消</button>
+      <button class="pri" id="pvYes">套用</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+ * 用户管理页（P1）
+ *
+ * 与 login.html 共用同一枚令牌（localStorage 的 matrix_token）和同一套
+ * 接口前缀推导规则。本页所有请求都打到服务端 /api/admin/users，角色判定
+ * 在服务端完成 —— 这里藏按钮只是界面礼貌，不是安全边界。
+ * ===================================================================== */
+
+/* 接口前缀：自动适配根域 / 子路径两种部署形态（与 login.html 完全一致） */
+const API_BASE = (function () {
+  let p = location.pathname.replace(/\/+$/, '');
+  if (/\.html?$/i.test(p)) p = p.replace(/\/[^/]*$/, '');
+  return p + '/api';
+})();
+
+const PAGE_LABEL = { people:'①人员名单', score:'②技能评分', matrix:'③匹配矩阵',
+                     insight:'④分析洞察', admin:'⑤用户管理' };
+const PAGE_ORDER = ['people','score','matrix','insight','admin'];
+
+const TKEY = 'matrix_token';
+let curMe = null;
+let users = [];                 // 当前列表
+const sel = new Set();          // 选中的柜员号
+let importRows = [];            // 待建号的解析结果
+
+/* ---------------- 小工具 ---------------- */
+const $ = s => document.querySelector(s);
+function esc(s){
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+function show(id){
+  ['vSetup','vNeedLogin','vNoAuth','vPwd','vMain'].forEach(v =>
+    $('#'+v).classList.toggle('on', v === id));
+  const main = id === 'vMain';
+  $('#btnReload').style.display = main ? '' : 'none';
+  $('#btnOut').style.display    = (main || id === 'vPwd') ? '' : 'none';
+}
+function msg(el, text, type){
+  const n = typeof el === 'string' ? $(el) : el;
+  n.className = 'msg ' + (type || 'err') + (text ? ' on' : '');
+  n.textContent = text || '';
+}
+
+/* ---------------- 会话 ---------------- */
+function getToken(){ try { return localStorage.getItem(TKEY) || ''; } catch(e){ return ''; } }
+function setToken(t){ try { t ? localStorage.setItem(TKEY, t) : localStorage.removeItem(TKEY); } catch(e){} }
+
+/* ---------------- 调后端 ---------------- */
+async function api(path, opt){
+  opt = opt || {};
+  const headers = { 'Content-Type': 'application/json' };
+  const tk = getToken();
+  if (tk) headers['Authorization'] = 'Bearer ' + tk;
+
+  const url = path.indexOf('/api') === 0 ? API_BASE + path.slice(4) : path;
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method: opt.method || 'GET',
+      headers: headers,
+      body: opt.body ? JSON.stringify(opt.body) : undefined,
+      cache: 'no-store'
+    });
+  } catch(e){
+    return { ok:false, status:0, code:'network', msg:'无法连接服务器（' + (e.message || e) + '）' };
+  }
+
+  let data = null;
+  try { data = await res.json(); } catch(e){ data = null; }
+  if (!data || typeof data !== 'object'){
+    return { ok:false, status:res.status, code:'bad_response', msg:'服务器返回异常（HTTP ' + res.status + '）' };
+  }
+  data.status = res.status;
+  return data;
+}
+
+/* =====================================================================
+ * 密码规则（与 login.html 同一套；服务端会再校验一遍，以服务端为准）
+ * ===================================================================== */
+function hasSeq(s, n){
+  n = n || 3;
+  if (!s || s.length < n) return false;
+  let up = 1, dn = 1;
+  for (let i = 1; i < s.length; i++){
+    const d = s.charCodeAt(i) - s.charCodeAt(i-1);
+    up = (d ===  1) ? up + 1 : 1;
+    dn = (d === -1) ? dn + 1 : 1;
+    if (up >= n || dn >= n) return true;
+  }
+  return false;
+}
+const WEAK = ['admin123','password1','abc12345','qwer1234','88888888',
+              '12345678','11111111','a1234567','abcd1234','admin888'];
+function checkPwd(pwd, teller){
+  if (!pwd) return '请输入新密码';
+  if (pwd.length < 8) return '密码至少 8 位';
+  if (!/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) return '密码必须同时包含字母和数字';
+  if (teller && pwd === teller) return '密码不能与柜员号相同';
+  if (WEAK.indexOf(pwd.toLowerCase()) >= 0) return '密码过于简单，请更换';
+  if (hasSeq(pwd, 3)) return '密码不能包含连续字符（如 123、abc）';
+  if (/(.)\1{2,}/.test(pwd)) return '密码不能包含 3 个以上重复字符（如 111、aaa）';
+  return '';
+}
+function paintRules(){
+  const p1 = $('#np1').value, p2 = $('#np2').value;
+  const who = (curMe && curMe.teller_no) || '';
+  const st = {
+    len:  p1.length >= 8,
+    mix:  /[A-Za-z]/.test(p1) && /[0-9]/.test(p1),
+    diff: !!p1 && p1 !== who,
+    seq:  !!p1 && !hasSeq(p1, 3),
+    rep:  !!p1 && !/(.)\1{2,}/.test(p1),
+    same: !!p1 && p1 === p2
+  };
+  $('#ruleList').querySelectorAll('li').forEach(li => li.classList.toggle('pass', !!st[li.dataset.r]));
+}
+
+/* =====================================================================
+ * 启动：判定当前处于哪种状态
+ * ===================================================================== */
+async function boot(){
+  const tk = getToken();
+
+  /* 没有令牌就别问服务端 —— 无令牌必然 401，浏览器会在控制台留一条
+     "Failed to load resource: 401"，看着像故障，其实只是没登录。 */
+  if (!tk){
+    msg('#needLoginMsg', '当前浏览器里没有登录凭据。', 'info');
+    show('vNeedLogin');
+    $('#whoBox').textContent = '';
+    return;
+  }
+
+  const r = await api('/api/me');
+  if (r.code === 'env_missing'){ msg('#setupMsg', r.msg); show('vSetup'); return; }
+  if (r.status === 0){
+    msg('#setupMsg', '本页需要通过服务端访问，请用部署后的网址打开。\n当前接口前缀：' + API_BASE);
+    show('vSetup'); return;
+  }
+  if (r.code === 'bad_response' && (r.status === 404 || r.status === 405)){
+    msg('#setupMsg', '接口未命中：' + API_BASE + '/me 返回 HTTP ' + r.status
+      + '\n请确认服务端函数已随本项目一起部署在该路径下。');
+    show('vSetup'); return;
+  }
+  if (r.status === 401 || !r.ok){
+    setToken('');
+    msg('#needLoginMsg', '登录状态已失效，请重新登录。', 'info');
+    show('vNeedLogin');
+    $('#whoBox').textContent = '';
+    return;
+  }
+
+  curMe = r.me;
+  $('#whoBox').innerHTML = esc(curMe.name || '') + ' · <b>' + esc(curMe.teller_no) + '</b> · '
+                         + esc(curMe.branch || '未设支行');
+
+  if (curMe.status === 'disabled'){
+    setToken('');
+    msg('#needLoginMsg', '账号已停用，请联系管理员。', 'info');
+    show('vNeedLogin'); return;
+  }
+  if (curMe.role !== 'admin'){ show('vNoAuth'); return; }
+
+  // 首登未改密：先改密，再进业务（与 §3.2 的状态机一致）
+  if (curMe.must_change_pwd){
+    $('#pwdSub').textContent = curMe.teller_no + '，你在使用初始密码，请先设置新密码。'
+                             + '建议用一个含字母和数字、长度 8 位以上的密码，例如 Fy2026ab。';
+    paintRules();
+    show('vPwd');
+    return;
+  }
+
+  show('vMain');
+  await loadUsers();
+}
+
+/* =====================================================================
+ * 账号列表
+ * ===================================================================== */
+async function loadUsers(q){
+  const qs = q ? ('?q=' + encodeURIComponent(q)) : '';
+  const r = await api('/api/admin/users' + qs);
+
+  if (!r.ok){
+    if (r.status === 401){ setToken(''); show('vNeedLogin'); return; }
+    if (r.status === 403){ show('vNoAuth'); return; }
+    msg('#listMsg', r.msg || '读取用户列表失败');
+    return;
+  }
+  // 注意：这里不清 #listMsg —— 它同时承担"上一次操作结果"的显示，
+  // 批量改完权限后会立刻重新拉列表，清了就等于结果一闪而过。
+
+  users = r.users || [];
+  sel.clear();
+
+  const hasPwd = users.filter(u => u.must_change_pwd).length;
+  $('#listHint').textContent = '共 ' + users.length + ' 个账号'
+    + (hasPwd ? '，其中 ' + hasPwd + ' 个还在用初始密码' : '');
+
+  renderTable();
+}
+
+function renderTable(){
+  const tb = $('#tbody');
+  if (!users.length){
+    tb.innerHTML = '<tr><td colspan="11"><div class="empty">没有匹配的账号。'
+      + '先用上面的「导入建号」把人加进来。</div></td></tr>';
+    $('#ckAll').checked = false;
+    paintBatch();
+    return;
+  }
+
+  tb.innerHTML = users.map(u => {
+    const pages = (u.visible_pages || []).slice().sort((a,b) =>
+      PAGE_ORDER.indexOf(a) - PAGE_ORDER.indexOf(b));
+    const tags = pages.length
+      ? pages.map(k => `<span class="tag b">${esc(PAGE_LABEL[k] || k)}</span>`).join('')
+      : '<span class="tag r">未授权任何版块</span>';
+
+    return `<tr data-t="${esc(u.teller_no)}" class="${sel.has(u.teller_no) ? 'sel' : ''}">
+      <td><input type="checkbox" class="ck" ${sel.has(u.teller_no) ? 'checked' : ''}></td>
+      <td class="teller">${esc(u.teller_no)}</td>
+      <td>${esc(u.name || '—')}</td>
+      <td class="${u.branch ? '' : 'mut'}">${esc(u.branch || '未设支行')}</td>
+      <td>${u.role === 'admin' ? '<span class="tag b">管理员</span>' : '<span class="tag">普通用户</span>'}</td>
+      <td>${u.data_scope === 'all' ? '全行' : '本支行'}</td>
+      <td>${u.can_edit ? '<span class="tag g">允许</span>' : '<span class="tag o">只读</span>'}</td>
+      <td style="white-space:normal;min-width:200px">${tags}</td>
+      <td>${u.status === 'active' ? '<span class="tag g">启用</span>' : '<span class="tag r">已停用</span>'}</td>
+      <td>${u.must_change_pwd ? '<span class="tag o">未改</span>' : '<span class="tag">已改</span>'}</td>
+      <td><button class="sm" data-row="reset" data-t="${esc(u.teller_no)}">重置密码</button></td>
+    </tr>`;
+  }).join('');
+
+  $('#ckAll').checked = users.length > 0 && users.every(u => sel.has(u.teller_no));
+  paintBatch();
+}
+
+function paintBatch(){
+  const n = sel.size;
+  $('#batchCnt').textContent = '已选 ' + n + ' 个账号';
+  $('#batch').classList.toggle('on', n > 0);
+}
+
+function toggleSel(teller, on){
+  if (on) sel.add(teller); else sel.delete(teller);
+  renderTable();
+}
+
+/* =====================================================================
+ * 批量授权：所有动作都先弹确认框，并把受影响账号列出来
+ * （砍掉了操作留痕，二次确认是唯一的防误操作手段）
+ * ===================================================================== */
+function confirmBox(title, bodyHtml, onYes, yesText){
+  $('#dlgTitle').textContent = title;
+  $('#dlgBody').innerHTML = bodyHtml;
+  $('#dlgYes').textContent = yesText || '确认';
+  $('#dlgYes').disabled = false;
+  $('#mask').classList.add('on');
+
+  $('#dlgYes').onclick = async function () {
+    $('#dlgYes').disabled = true;
+    $('#dlgYes').textContent = '处理中…';
+    try { await onYes(); }
+    finally { $('#mask').classList.remove('on'); }
+  };
+  $('#dlgNo').onclick = function () { $('#mask').classList.remove('on'); };
+}
+
+function affectHtml(){
+  const arr = Array.from(sel);
+  const showArr = arr.slice(0, 40);
+  const more = arr.length > showArr.length ? ('\n…… 另有 ' + (arr.length - showArr.length) + ' 个') : '';
+  return '<div class="affect">' + esc(showArr.join('、') + more) + '</div>';
+}
+
+async function patchUsers(patch, opts, tellers){
+  const list = tellers || Array.from(sel);
+  if (!list.length) return null;
+
+  msg('#listMsg', '');
+
+  const body = { tellers: list };
+  if (opts && opts.preset) body.preset = opts.preset;
+  if (opts && opts.reset_pwd) body.reset_pwd = true;
+  if (patch) body.patch = patch;
+
+  const r = await api('/api/admin/users', { method:'PATCH', body: body });
+  if (!r.ok){
+    msg('#listMsg', r.msg || '保存失败', 'err');
+    return null;
+  }
+
+  const parts = [];
+  if (r.affected) parts.push('已更新 ' + r.affected + ' 个账号');
+  if (r.reset && r.reset.length) parts.push('已重置 ' + r.reset.length + ' 个密码');
+  if (r.not_found && r.not_found.length) parts.push('未找到 ' + r.not_found.length + ' 个');
+  if (r.failed && r.failed.length) parts.push('失败 ' + r.failed.length + ' 个');
+  msg('#listMsg', parts.join('；') || '操作完成', parts.length ? 'ok' : 'info');
+
+  await loadUsers($('#q').value.trim());
+  return r;
+}
+
+/* 各批量动作 → 确认文案 + 真正的 patch */
+const ACTIONS = {
+  'scope:all':    { label:'数据范围改为「全行」',  tip:'他们可以看到并编辑全行的数据。', patch:{ data_scope:'all' } },
+  'scope:branch': { label:'数据范围改为「本支行」', tip:'只能看到本支行的数据；未设支行的账号将看不到任何数据。', patch:{ data_scope:'branch' } },
+  'edit:true':    { label:'允许编辑技能评分',      tip:'可以修改数据范围内人员的技能等级。', patch:{ can_edit:true } },
+  'edit:false':   { label:'禁止编辑技能评分',      tip:'所有评分单元格转为只读。', patch:{ can_edit:false } },
+  'status:active':{ label:'启用账号',              tip:'启用后即可正常登录。', patch:{ status:'active' } },
+  'status:disabled':{ label:'停用账号',            tip:'停用后立即无法登录（下一次请求就进不来），历史数据保留。', patch:{ status:'disabled' } },
+  'role:admin':   { label:'设为管理员',            tip:'管理员拥有全部权限，不受数据范围/编辑/版块限制。', patch:{ role:'admin', data_scope:'all', can_edit:true, visible_pages:['people','score','matrix','insight','admin'] } },
+  'role:user':    { label:'取消管理员',            tip:'降为普通用户，之后按数据范围与版块授权生效。', patch:{ role:'user' } }
+};
+
+function runAction(key){
+  if (!sel.size) return;
+
+  // 查看版块不是一次 PATCH —— 要先让管理员勾选，再走确认
+  if (key === 'pages'){ openPv(); return; }
+
+  if (key === 'reset'){
+    confirmBox('重置密码',
+      '<div>将把下列账号的密码重置为<b>柜员号</b>，并置为"需首次改密"：</div>' + affectHtml()
+      + '<div style="margin-top:10px;color:var(--muted);font-size:12.5px">'
+      + '建议重置后通知本人尽快登录改密。</div>',
+      () => patchUsers(null, { reset_pwd:true }), '确认重置');
+    return;
+  }
+
+  const a = ACTIONS[key];
+  if (!a) return;
+
+  // 别把自己关在门外：服务端也会拦，这里先给出更清楚的提示
+  if (sel.has(curMe.teller_no)){
+    if (key === 'role:user'){ msg('#listMsg', '不能取消自己的管理员身份，请由另一位管理员操作。', 'err'); return; }
+    if (key === 'status:disabled'){ msg('#listMsg', '不能停用自己的账号。', 'err'); return; }
+  }
+
+  confirmBox(a.label,
+    '<div>' + esc(a.tip) + '</div><div style="margin-top:8px">影响 <b>' + sel.size + '</b> 个账号：</div>' + affectHtml(),
+    () => patchUsers(a.patch), '确认' + a.label.slice(0,2));
+}
+
+function runPreset(preset){
+  if (!sel.size) return;
+  const NAME = { admin:'全行管理员', recorder:'支行录入员', viewer:'只读观察员' };
+  const DET = {
+    admin:    'role=admin，数据范围＝全行，允许编辑，版块＝全部（含用户管理）',
+    recorder: '普通用户，数据范围＝本支行，允许编辑，版块＝名单/评分/矩阵/洞察',
+    viewer:   '普通用户，数据范围＝本支行，不允许编辑，版块＝名单/评分/矩阵/洞察'
+  };
+  // recorder / viewer 会把角色改成 user，服务端不允许改自己的角色
+  if (preset !== 'admin' && sel.has(curMe.teller_no)){
+    msg('#listMsg', '「' + NAME[preset] + '」会把角色改成普通用户，不能对自己套用。'
+      + '请先在选中范围里去掉你自己，或改用「全行管理员」档位。', 'err');
+    return;
+  }
+  confirmBox('套用预设：' + NAME[preset],
+    '<div>将覆盖下列账号的权限设置：<br><span style="color:var(--muted)">' + esc(DET[preset]) + '</span></div>'
+    + '<div style="margin-top:8px">影响 <b>' + sel.size + '</b> 个账号：</div>' + affectHtml(),
+    () => patchUsers(null, { preset:preset }), '确认套用');
+}
+
+/* ---------------- 查看版块弹窗 ---------------- */
+function openPv(){
+  if (!sel.size) return;
+  $('#pvBox').querySelectorAll('input').forEach(c => { c.checked = false; });
+  msg('#pvWarn', '');
+  $('#maskPv').classList.add('on');
+}
+function applyPv(){
+  const pages = [];
+  $('#pvBox').querySelectorAll('input').forEach(c => { if (c.checked) pages.push(c.value); });
+
+  if (!pages.length){ msg('#pvWarn', '至少勾选一个版块，否则对方登录后什么都看不到。'); return; }
+  if (sel.has(curMe.teller_no) && pages.indexOf('admin') < 0){
+    msg('#pvWarn', '你自己也在选中范围内，去掉「⑤ 用户管理」后你会看不到本页。请取消选择自己，或保留该版块。');
+    return;
+  }
+  $('#maskPv').classList.remove('on');
+  confirmBox('设置查看版块',
+    '<div>把这 ' + sel.size + ' 个账号的可见版块统一设为：</div>'
+    + '<div class="affect">' + esc(pages.map(k => PAGE_LABEL[k] || k).join('、')) + '</div>'
+    + affectHtml(),
+    () => patchUsers({ visible_pages: pages }), '确认套用');
+}
+
+/* =====================================================================
+ * 导入建号
+ * ===================================================================== */
+const BAD_TELLER = /^[A-Za-z0-9_-]{2,32}$/;
+
+function tplDownload(){
+  const csv = '\ufeff柜员号,姓名,支行\r\n8051646,张三,富春支行\r\n8051647,李四,\r\n';
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '用户导入模板.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+/* ---------- CSV ---------- */
+function parseCsv(text){
+  text = String(text).replace(/^\ufeff/, '');
+  const rows = [];
+  let row = [], cell = '', q = false;
+
+  for (let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if (q){
+      if (ch === '"'){
+        if (text[i+1] === '"'){ cell += '"'; i++; }
+        else q = false;
+      } else cell += ch;
+    } else {
+      if (ch === '"') q = true;
+      else if (ch === ',' || ch === '\t'){ row.push(cell); cell = ''; }
+      else if (ch === '\r'){ /* 忽略，等 \n */ }
+      else if (ch === '\n'){ row.push(cell); rows.push(row); row = []; cell = ''; }
+      else cell += ch;
+    }
+  }
+  row.push(cell);
+  rows.push(row);
+  return rows.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+/* ---------- 粘贴板：Tab / 逗号 / 多空格 都能切 ---------- */
+function parsePaste(text){
+  return String(text).replace(/^\ufeff/, '').split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => line.split(/\t|,|\s{2,}/).map(c => c.trim()));
+}
+
+/* ---------- xlsx（零依赖：解 ZIP + DecompressionStream 解 deflate） ---------- */
+function u16(d, o){ return d[o] | (d[o+1] << 8); }
+function u32(d, o){ return (d[o] | (d[o+1] << 8) | (d[o+2] << 16) | (d[o+3] << 24)) >>> 0; }
+
+/** 把 xlsx 当成一个 ZIP 读出来：{ 路径: {raw, method} } */
+function unzipEntries(d){
+  let eocd = -1;
+  const floor = Math.max(0, d.length - 22 - 65536);
+  for (let i = d.length - 22; i >= floor; i--){
+    if (u32(d, i) === 0x06054b50){ eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('不是有效的 xlsx 文件（未找到 ZIP 目录结尾），请另存为 .xlsx 或改用 CSV');
+
+  const count = u16(d, eocd + 10);
+  let p = u32(d, eocd + 16);
+  const out = {};
+
+  for (let i = 0; i < count; i++){
+    if (u32(d, p) !== 0x02014b50) break;              // 中央目录条目签名
+    const method = u16(d, p + 10);
+    const csize  = u32(d, p + 20);
+    const nlen   = u16(d, p + 28);
+    const elen   = u16(d, p + 30);
+    const clen   = u16(d, p + 32);
+    const lho    = u32(d, p + 42);
+    const name   = new TextDecoder('utf-8').decode(d.subarray(p + 46, p + 46 + nlen));
+
+    // 本地头的文件名/扩展区长度可能和中央目录不同，必须按本地头算数据起点
+    const lnlen = u16(d, lho + 26);
+    const lelen = u16(d, lho + 28);
+    const start = lho + 30 + lnlen + lelen;
+    out[name] = { raw: d.subarray(start, start + csize), method: method };
+    p += 46 + nlen + elen + clen;
+  }
+  return out;
+}
+
+async function entryText(e){
+  if (!e) return '';
+  if (e.method === 0) return new TextDecoder('utf-8').decode(e.raw);
+  if (e.method !== 8) throw new Error('xlsx 使用了不支持的压缩方式（method=' + e.method + '）');
+  if (typeof DecompressionStream === 'undefined'){
+    throw new Error('当前浏览器不支持直接读 .xlsx，请在 Excel 里另存为 CSV 后再导入');
+  }
+  const stream = new Response(e.raw).body.pipeThrough(new DecompressionStream('deflate-raw'));
+  return await new Response(stream).text();
+}
+
+function decodeXml(s){
+  return String(s)
+    .replace(/&#x([0-9a-fA-F]+);/g, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(Number(d)))
+    .replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+    .replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+}
+
+function colIndex(letters){
+  let n = 0;
+  for (let i = 0; i < letters.length; i++) n = n * 26 + (letters.charCodeAt(i) - 64);
+  return n - 1;
+}
+
+function parseShared(xml){
+  const out = [];
+  if (!xml) return out;
+  const reSi = /<si\b[^>]*>([\s\S]*?)<\/si>|<si\b[^>]*\/>/g;
+  let m;
+  while ((m = reSi.exec(xml))){
+    let s = '';
+    if (m[1]){
+      const reT = /<t\b[^>]*>([\s\S]*?)<\/t>/g;
+      let n;
+      while ((n = reT.exec(m[1]))) s += decodeXml(n[1]);
+    }
+    out.push(s);
+  }
+  return out;
+}
+
+function parseSheetXml(xml, shared){
+  const rows = [];
+  const reRow = /<row\b[^>]*>([\s\S]*?)<\/row>/g;
+  let m;
+  while ((m = reRow.exec(xml))){
+    const cells = [];
+    const reC = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+    let n;
+    while ((n = reC.exec(m[1]))){
+      const attr = n[1] || '', inner = n[2] || '';
+      const rm = /r="([A-Z]+)\d+"/.exec(attr);
+      const tm = /t="([^"]+)"/.exec(attr);
+      const type = tm ? tm[1] : '';
+      let v = '';
+
+      if (type === 'inlineStr'){
+        const tv = /<t\b[^>]*>([\s\S]*?)<\/t>/.exec(inner);
+        v = tv ? decodeXml(tv[1]) : '';
+      } else {
+        const vm = /<v>([\s\S]*?)<\/v>/.exec(inner);
+        const raw = vm ? vm[1] : '';
+        v = (type === 's') ? (shared[Number(raw)] || '') : decodeXml(raw);
+      }
+      cells[rm ? colIndex(rm[1]) : cells.length] = v;
+    }
+    rows.push(cells);
+  }
+  return rows.map(r => {
+    const o = [];
+    for (let i = 0; i < r.length; i++) o[i] = r[i] === undefined ? '' : r[i];
+    return o;
+  });
+}
+
+async function parseXlsx(file){
+  const d = new Uint8Array(await file.arrayBuffer());
+  const zip = unzipEntries(d);
+
+  let sheetKey = null;
+  const names = Object.keys(zip).filter(k => /^xl\/worksheets\/sheet\d*\.xml$/i.test(k)).sort();
+  if (names.length) sheetKey = names[0];
+  if (!sheetKey) throw new Error('这个 xlsx 里没有找到工作表（可能是 .xls 老格式，请另存为 .xlsx 或 CSV）');
+
+  const shared = parseShared(await entryText(zip['xl/sharedStrings.xml']));
+  return parseSheetXml(await entryText(zip[sheetKey]), shared);
+}
+
+/* ---------- 归一化：认表头，认列 ---------- */
+/* 表头识别要"窄"，不能"宽" —— 一开始用 /支行/ 模糊匹配，结果数据行里的
+   「富春支行」被当成表头，整行被吃掉。所以改成锚定词首：「支行」是表头，
+   「富春支行」是数据。再要求 2 列以上命中，或出现柜员/工号这类不可能当数据的词。 */
+const HEAD_TELL = /^(柜员|工号|账号|员工|teller|柜员号)/i;
+const HEAD_NAME = /^(姓名|名字|name)/i;
+const HEAD_BR   = /^(支行|机构|网点|部门|所属|所在|branch|org)/i;
+
+function pickColumns(rows){
+  const none = { head:false, cTell:0, cName:1, cBranch:2, start:0 };
+  if (!rows.length) return none;
+
+  const first = rows[0].map(c => String(c === undefined || c === null ? '' : c).trim());
+  const isHeadCell = c => !!c && (HEAD_TELL.test(c) || HEAD_NAME.test(c) || HEAD_BR.test(c));
+
+  const score = first.filter(isHeadCell).length;
+  const hardHit = first.some(c => HEAD_TELL.test(c));
+  if (!hardHit && score < 2) return none;              // 认不出表头 → 按无表头处理
+
+  const find = re => { for (let i = 0; i < first.length; i++) if (re.test(first[i])) return i; return -1; };
+  const cTell   = find(HEAD_TELL);
+  const cName   = find(HEAD_NAME);
+  const cBranch = find(HEAD_BR);
+  return {
+    head: true,
+    cTell:   cTell   < 0 ? 0 : cTell,
+    cName:   cName   < 0 ? -1 : cName,
+    cBranch: cBranch < 0 ? -1 : cBranch,
+    start: 1
+  };
+}
+
+function normalize(rows){
+  const col = pickColumns(rows);
+  const out = [];
+
+  for (let i = col.start; i < rows.length; i++){
+    const r = rows[i] || [];
+    const teller = String(r[col.cTell] === undefined ? '' : r[col.cTell]).trim();
+    const name   = col.cName   < 0 ? '' : String(r[col.cName]   === undefined ? '' : r[col.cName]).trim();
+    const branch = col.cBranch < 0 ? '' : String(r[col.cBranch] === undefined ? '' : r[col.cBranch]).trim();
+    if (!teller && !name && !branch) continue;
+
+    let bad = '';
+    if (!teller) bad = '柜员号为空';
+    else if (!BAD_TELLER.test(teller)) bad = '柜员号格式不合法（只允许字母数字，2-32 位）';
+
+    out.push({ teller: teller, name: name, branch: branch, bad: bad, row: i + 1 });
+  }
+  return out;
+}
+
+/* ---------- 预览 ---------- */
+function renderImport(rows){
+  importRows = rows;
+  const box = $('#impBox');
+  const tb = $('#impTable');
+
+  if (!rows.length){
+    box.style.display = 'block';
+    $('#impSummary').className = 'msg err on';
+    $('#impSummary').textContent = '没有解析出任何有效行。请确认第一列是柜员号。';
+    tb.innerHTML = '';
+    $('#btnCreate').disabled = true;
+    return;
+  }
+  box.style.display = 'block';
+
+  const bad    = rows.filter(r => r.bad).length;
+  const noBr   = rows.filter(r => !r.bad && !r.branch).length;
+  const ok     = rows.length - bad;
+
+  let txt = '解析出 ' + rows.length + ' 行：可建号 ' + ok + ' 行';
+  if (bad)  txt += '，' + bad + ' 行格式不对（已标红，会被跳过）';
+  if (noBr) txt += '，' + noBr + ' 行没填支行（已标黄，可先建号，之后再补）';
+  $('#impSummary').className = 'msg ' + (bad ? 'warn' : 'info') + ' on';
+  $('#impSummary').textContent = txt;
+
+  const head = '<tr><th>行</th><th>柜员号</th><th>姓名</th><th>支行</th><th>检查</th></tr>';
+  tb.innerHTML = head + rows.slice(0, 300).map(r => {
+    const cls = r.bad ? 'badrow' : (r.branch ? '' : 'warnrow');
+    const chk = r.bad ? '<span style="color:var(--danger)">' + esc(r.bad) + '</span>'
+              : (r.branch ? '<span style="color:var(--ok)">可建号</span>'
+                          : '<span style="color:var(--warn)">缺支行</span>');
+    return `<tr class="${cls}"><td>${r.row}</td><td>${esc(r.teller)}</td>
+      <td>${esc(r.name || '（自动带出）')}</td>
+      <td>${esc(r.branch || '（自动带出）')}</td><td>${chk}</td></tr>`;
+  }).join('') + (rows.length > 300 ? '<tr><td colspan="5">…… 仅显示前 300 行</td></tr>' : '');
+
+  $('#btnCreate').disabled = !ok;
+}
+
+async function handleFile(f){
+  if (!f) return;
+  $('#fileName').textContent = f.name;
+  msg('#impResult', '');
+  try {
+    const low = f.name.toLowerCase();
+    let rows;
+    if (/\.xlsx$/i.test(low)) rows = await parseXlsx(f);
+    else if (/\.xls$/i.test(low)) throw new Error('不支持老的 .xls 格式，请在 Excel 里另存为 .xlsx 或 CSV');
+    else rows = parseCsv(await f.text());
+    renderImport(normalize(rows));
+  } catch(e){
+    $('#impBox').style.display = 'block';
+    $('#impSummary').className = 'msg err on';
+    $('#impSummary').textContent = '读取失败：' + (e.message || e);
+    $('#impTable').innerHTML = '';
+    $('#btnCreate').disabled = true;
+  }
+}
+
+async function doCreate(){
+  const list = importRows.filter(r => !r.bad).map(r => ({
+    teller: r.teller, name: r.name || undefined, branch: r.branch || undefined
+  }));
+  if (!list.length) return;
+
+  $('#btnCreate').disabled = true;
+  $('#btnCreate').textContent = '建号中…';
+  try {
+    const r = await api('/api/admin/users', { method:'POST', body:{ users: list } });
+    if (!r.ok){ msg('#impResult', r.msg || '建号失败'); return; }
+
+    const s = r.summary || {};
+    const lines = ['新增 ' + (s.created || 0) + ' 个，已存在 ' + (s.existed || 0) + ' 个，失败 ' + (s.failed || 0) + ' 个。'];
+    if (r.existed && r.existed.length) lines.push('已存在（未改动权限与密码）：' + r.existed.join('、'));
+    if (r.failed && r.failed.length) lines.push('失败：' + r.failed.map(f => f.teller + '（' + f.msg + '）').join('、'));
+    lines.push('初始密码＝柜员号，请通知本人首次登录后立即改密。');
+
+    msg('#impResult', lines.join('\n'), r.failed && r.failed.length ? 'warn' : 'ok');
+    await loadUsers($('#q').value.trim());
+  } catch(e){
+    msg('#impResult', '建号异常：' + (e.message || e));
+  } finally {
+    $('#btnCreate').disabled = false;
+    $('#btnCreate').textContent = '确认建号';
+  }
+}
+
+/* =====================================================================
+ * 改密（首登强制）
+ * ===================================================================== */
+async function doChange(){
+  const p1 = $('#np1').value, p2 = $('#np2').value;
+  msg('#pwdMsg', '');
+
+  const err = checkPwd(p1, curMe.teller_no);
+  if (err){ msg('#pwdMsg', err); return; }
+  if (p1 !== p2){ msg('#pwdMsg', '两次输入的密码不一致'); return; }
+
+  $('#btnChange').disabled = true;
+  $('#btnChange').textContent = '提交中…';
+  try {
+    const r = await api('/api/change-password', { method:'POST', body:{ newPassword: p1 } });
+    if (!r.ok){
+      if (r.code === 'unauthorized'){ setToken(''); show('vNeedLogin'); return; }
+      msg('#pwdMsg', r.msg || '修改失败');
+      return;
+    }
+    curMe = r.me;
+    $('#np1').value = ''; $('#np2').value = ''; paintRules();
+    msg('#pwdMsg', '密码修改成功', 'ok');
+    show('vMain');
+    await loadUsers();
+  } finally {
+    $('#btnChange').disabled = false;
+    $('#btnChange').textContent = '确认修改';
+  }
+}
+
+async function doLogout(){
+  try { await api('/api/logout', { method:'POST' }); } catch(e){}
+  setToken('');
+  curMe = null;
+  sel.clear();
+  location.href = 'login.html';
+}
+
+/* =====================================================================
+ * 事件绑定
+ * ===================================================================== */
+$('#btnReload').addEventListener('click', () => { msg('#listMsg',''); loadUsers($('#q').value.trim()); });
+$('#btnOut').addEventListener('click', doLogout);
+$('#btnSetupRetry').addEventListener('click', boot);
+$('#btnGoLogin').addEventListener('click', () => { location.href = 'login.html'; });
+$('#btnNoAuthLogin').addEventListener('click', () => { location.href = 'login.html'; });
+$('#btnNoAuthOut').addEventListener('click', doLogout);
+$('#btnPwdOut').addEventListener('click', doLogout);
+
+$('#btnChange').addEventListener('click', doChange);
+$('#np1').addEventListener('input', paintRules);
+$('#np2').addEventListener('input', paintRules);
+$('#np2').addEventListener('keydown', e => { if (e.key === 'Enter') doChange(); });
+
+$('#btnSearch').addEventListener('click', () => { msg('#listMsg',''); loadUsers($('#q').value.trim()); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter'){ msg('#listMsg',''); loadUsers($('#q').value.trim()); } });
+$('#btnReset').addEventListener('click', () => { $('#q').value = ''; msg('#listMsg',''); loadUsers(''); });
+
+$('#ckAll').addEventListener('change', function () {
+  users.forEach(u => { this.checked ? sel.add(u.teller_no) : sel.delete(u.teller_no); });
+  renderTable();
+});
+$('#btnUnsel').addEventListener('click', () => { sel.clear(); renderTable(); });
+
+$('#tbody').addEventListener('click', function (e){
+  // 行内「重置密码」：只针对这一行，不影响已有的多选
+  const btn = e.target.closest('button[data-row="reset"]');
+  if (btn){
+    const t = btn.dataset.t;
+    const u = users.filter(x => x.teller_no === t)[0] || {};
+    confirmBox('重置密码',
+      '<div>将把 <b>' + esc(t) + (u.name ? '（' + esc(u.name) + '）' : '') + '</b> 的密码重置为<b>柜员号</b>，'
+      + '并置为"需首次改密"。</div>'
+      + '<div style="margin-top:10px;color:var(--muted);font-size:12.5px">建议重置后通知本人尽快登录改密。</div>',
+      () => patchUsers(null, { reset_pwd:true }, [t]), '确认重置');
+    return;
+  }
+
+  const tr = e.target.closest('tr[data-t]');
+  if (!tr) return;
+  const t = tr.dataset.t;
+  sel.has(t) ? sel.delete(t) : sel.add(t);
+  renderTable();
+});
+
+$('#batch').addEventListener('click', function (e){
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.preset){ runPreset(b.dataset.preset); return; }
+  if (b.dataset.act) runAction(b.dataset.act);
+});
+
+$('#btnTpl').addEventListener('click', tplDownload);
+$('#btnPick').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', function () { handleFile(this.files[0]); this.value = ''; });
+$('#btnParse').addEventListener('click', function () {
+  const t = $('#paste').value.trim();
+  if (!t){ msg('#impResult', ''); $('#impBox').style.display = 'block';
+    $('#impSummary').className = 'msg err on'; $('#impSummary').textContent = '粘贴框是空的。';
+    $('#impTable').innerHTML = ''; $('#btnCreate').disabled = true; return; }
+  renderImport(normalize(parsePaste(t)));
+});
+$('#btnClearImp').addEventListener('click', function () {
+  $('#paste').value = ''; $('#fileName').textContent = '';
+  $('#impBox').style.display = 'none'; $('#impTable').innerHTML = '';
+  importRows = []; msg('#impResult', '');
+});
+$('#btnCancelImp').addEventListener('click', function () {
+  $('#impBox').style.display = 'none'; importRows = [];
+});
+$('#btnCreate').addEventListener('click', doCreate);
+
+$('#pvNo').addEventListener('click', () => $('#maskPv').classList.remove('on'));
+$('#pvYes').addEventListener('click', applyPv);
+
+boot();
+</script>
+</body>
+</html>

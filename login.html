@@ -140,6 +140,7 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
     <div class="tags" id="iPages"></div>
     <div class="warnbox" id="homeNote" style="display:none"></div>
     <button class="btn" id="btnEnter">进入系统</button>
+    <button class="btn ghost" id="btnAdmin" style="margin-top:10px;display:none">用户管理</button>
     <button class="btn ghost" id="btnOut" style="margin-top:10px">退出登录</button>
   </div>
 
@@ -289,6 +290,13 @@ function fillLast(){
 
 async function boot(){
   const tk = getToken();
+
+  /* 没有令牌就直接进登录页 —— 不要先问一次 /api/me。
+     以前这里无论有没有令牌都发请求，服务端对无令牌必然回 401，
+     浏览器会把 401 当失败请求记一条红色报错（Failed to load resource），
+     看着像故障，其实只是"还没登录"这个正常状态。少一次请求，也少一条噪音。 */
+  if (!tk){ show('vLogin'); fillLast(); return; }
+
   const r = await api('/api/me');
 
   if (r.code === 'env_missing'){ showSetup(r.msg); return; }
@@ -305,11 +313,13 @@ async function boot(){
     return;
   }
 
-  if (!tk || !r.ok){
+  // 401＝令牌过期或签名对不上（例如服务端换过 AUTH_SECRET），清掉回登录页
+  if (!r.ok){
     setToken('');
     show('vLogin');
     fillLast();
-    if (r.code === 'disabled') msg('#loginMsg', r.msg || '账号已停用，请联系管理员');
+    if (r.status === 401) msg('#loginMsg', '登录状态已失效，请重新登录', 'info');
+    else if (r.code === 'disabled') msg('#loginMsg', r.msg || '账号已停用，请联系管理员');
     return;
   }
 
@@ -395,6 +405,10 @@ function showHome(me){
     note.style.display = 'none';
   }
 
+  // 管理员的"用户管理"入口（P1）。角色只用来决定按钮显不显示，
+  // 真正的权限判定在服务端 /api/admin/users（非管理员一律 403）。
+  $('#btnAdmin').style.display = (me.role === 'admin') ? 'block' : 'none';
+
   show('vHome');
 }
 
@@ -471,6 +485,7 @@ $('#np2').addEventListener('keydown', e => { if (e.key === 'Enter') doChange(); 
 $('#btnBackLogin').addEventListener('click', doLogout);
 $('#btnOut').addEventListener('click', doLogout);
 $('#btnEnter').addEventListener('click', enterSystem);
+$('#btnAdmin').addEventListener('click', () => { location.href = 'admin.html'; });
 $('#btnRetry').addEventListener('click', boot);
 
 boot();

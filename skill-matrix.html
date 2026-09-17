@@ -251,13 +251,16 @@ td input:focus{border-color:var(--primary);background:#fff}
 .warnbox b{color:#8a6320}
 .okbox{background:#eff8f3;border:1px solid #cbe8da;border-radius:6px;padding:10px 14px;font-size:13px;color:#1f7a54}
 /* ---------- 弹窗 ---------- */
+/* 弹窗顶边锚定（不用垂直居中）：居中的话内容一变高，整个弹窗就被重新居中，
+   顶边会跟着上下跑 —— 新增技能、展开批量录入框时看起来就是"页面在跳"。
+   改成 flex-start 后，内容变高只向下延伸，顶边始终不动。 */
 .mask{
   position:fixed;inset:0;background:rgba(23,37,55,.45);display:none;
-  align-items:center;justify-content:center;z-index:100;padding:24px;
+  align-items:flex-start;justify-content:center;z-index:100;padding:4vh 24px 24px;
 }
 .mask.on{display:flex}
 .modal{
-  background:#fff;border-radius:10px;width:100%;max-width:1080px;max-height:92vh;
+  background:#fff;border-radius:10px;width:100%;max-width:1080px;max-height:90vh;
   display:flex;flex-direction:column;overflow:hidden;
 }
 .modal-head{padding:15px 20px;border-bottom:1px solid var(--line);font-size:15px;font-weight:700;display:flex;align-items:center}
@@ -317,6 +320,9 @@ select[disabled]{opacity:.5;cursor:not-allowed}
 .bulkbox .bh .hintline{font-weight:400}
 .bulkbox textarea{width:100%;height:104px;resize:vertical;font-size:13px;line-height:1.8}
 .bulkbox .bf{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+/* 结果提示固定单行、超长省略：多一行换行会把面板撑高，下面的按钮跟着挪，看着就是"页面在跳"。
+   完整文案放在 title 里，鼠标悬停仍能看全。 */
+.bulkbox .bf .hintline{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bulkbox .bf .spacer{flex:1}
 .bulkbox .bf .hintline[data-t="ok"]{color:var(--ok)}
 .bulkbox .bf .hintline[data-t="err"]{color:var(--danger)}
@@ -365,7 +371,6 @@ select[disabled]{opacity:.5;cursor:not-allowed}
     <button class="btn primary hide-ro" id="btnOpenImport">导入名单</button>
     <button class="btn" id="btnTplTop">下载导入模板</button>
     <button class="btn hide-ro" id="btnAddPerson">＋ 新增人员</button>
-    <button class="btn hide-ro" id="btnLoadDemo">加载示例数据</button>
     <div class="spacer"></div>
     <button class="btn danger hide-ro" id="btnClearAll">清空全部数据</button>
   </div>
@@ -598,7 +603,6 @@ select[disabled]{opacity:.5;cursor:not-allowed}
         <textarea id="bulkText" placeholder="例：存取款&#10;政企业务&#10;支付结算&#10;账户业务&#10;反洗钱反电诈"></textarea>
         <div class="bf">
           <span class="hintline" id="bulkMsg"></span>
-          <div class="spacer"></div>
           <button class="btn ghost sm" id="btnBulkClear">清空</button>
           <button class="btn sm" id="btnBulkClose">收起</button>
           <button class="btn sm primary" id="btnBulkOk">添加到列表</button>
@@ -999,7 +1003,7 @@ function renderWho(){
 const BLOCK_EDIT = '#peopleBody input[data-id], #peopleBody [data-del], ' +
   '#scoreBody .sc-cell, #scoreBody input.note-inp, ' +
   '#stdEditor .std-sel, #stdEditor [data-delpost], #mxTitle, #mxSubtitle, ' +
-  '#btnOpenImport, #btnAddPerson, #btnLoadDemo, #btnClearAll, #btnBulkApply, ' +
+  '#btnOpenImport, #btnAddPerson, #btnClearAll, #btnBulkApply, ' +
   '#btnAddPost, #scoreTable th.skcol, #skillMask';
 /* 只属于"全行统一配置"的部分：技能项 / 岗位标准 / 矩阵标题 */
 const BLOCK_CFG = '#stdEditor .std-sel, #stdEditor [data-delpost], #mxTitle, #mxSubtitle, ' +
@@ -1186,7 +1190,7 @@ function renderPeople(){
   $('#tabPeople').textContent = state.people.length;
   $('#peopleCount').textContent = '共 ' + state.people.length + ' 人';
   if(!state.people.length){
-    tb.innerHTML = '<tr><td colspan="8"><div class="empty">还没有人员数据<br><b>点击上方「导入名单」，或加载示例数据试用</b></div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="8"><div class="empty">还没有人员数据<br><b>点击上方「导入名单」批量导入，或「＋ 新增人员」逐条添加</b></div></td></tr>';
     return;
   }
   const lock = branchLocked() ? ' readonly title="支行由账号归属决定（' + esc(ME.branch) + '），不能在这里改"' : '';
@@ -1945,7 +1949,8 @@ $('#btnAddPerson').onclick = ()=>{
   wrap.scrollTop = wrap.scrollHeight;
   const rows = $('#peopleBody').querySelectorAll('tr');
   const last = rows[rows.length-1];
-  if(last) last.querySelector('input[data-f="name"]').focus();
+  /* preventScroll：滚动已经由上一行限定在名单容器内完成，别让浏览器再把整个页面拉一下 */
+  if(last) last.querySelector('input[data-f="name"]').focus({preventScroll:true});
 };
 $('#btnClearAll').onclick = ()=>{
   if(!state.people.length) return;
@@ -2094,6 +2099,38 @@ function openSkillManager(){
   $('#btnSkillBulk').classList.remove('primary');
   bulkMsg('');
   skillMask.classList.add('on');
+  skillBody().scrollTop = 0;      // 每次打开都从顶部开始，避免沿用上次的滚动位置
+}
+/* 弹窗内的滚动容器（.modal-body） */
+function skillBody(){ return $('#skillTable').parentElement; }
+/* 最小滚动：只把目标带进可视区，绝不做「滚到底」这种大跨度位移。
+   配合 focus({preventScroll:true}) 使用，否则浏览器会自己把焦点元素滚进视野。
+   smooth=true 时用动效过渡，几百像素的位移看起来是"移过去"而不是"跳过去"。 */
+function revealIn(el, pad, smooth){
+  if(!el) return;
+  const box = skillBody();
+  pad = pad || 10;
+  const r = el.getBoundingClientRect(), c = box.getBoundingClientRect();
+  let to = null;
+  if(r.bottom > c.bottom - pad)      to = box.scrollTop + Math.ceil(r.bottom - c.bottom + pad);
+  else if(r.top < c.top + pad)       to = box.scrollTop - Math.ceil(c.top + pad - r.top);
+  if(to === null) return;
+  if(smooth) box.scrollTo({ top: to, behavior: 'smooth' });
+  else box.scrollTop = to;
+}
+/* 位移补偿：列表增删会让下面的内容整体升降。先记住锚点的位置，改完之后用滚动抵消这点位移，
+   眼睛看到的就是原地不动。锚点取"用户此刻盯着的东西"：录入框开着就是录入框，否则就是刚点的按钮。 */
+function autoAnchor(){
+  const box = $('#bulkBox');
+  return (box && box.style.display !== 'none') ? box : $('#btnSkillAdd');
+}
+function holdStill(anchor, fn){
+  if(!anchor){ fn(); return; }
+  const box = skillBody();
+  const top = anchor.getBoundingClientRect().top, st = box.scrollTop;
+  fn();
+  const d = Math.round(anchor.getBoundingClientRect().top - top);
+  if(d) box.scrollTop = st + d;      // 内容没超出可视区时这里会被自动夹住，等于不补偿
 }
 function renderSkillDraft(){
   $('#skillTable').innerHTML = `<thead><tr>
@@ -2148,11 +2185,13 @@ $('#btnManageSkill').onclick = openSkillManager;
 $('#btnSkillCancel').onclick = ()=>{ skillMask.classList.remove('on'); };
 $('#skillMask').addEventListener('click', e=>{ if(e.target === skillMask) skillMask.classList.remove('on'); });
 $('#btnSkillAdd').onclick = ()=>{
-  skillDraft.push({orig:'', name:'', kind:'level'});
-  renderSkillDraft();
-  const inp = $('#skillTable').querySelector('input[data-i="' + (skillDraft.length-1) + '"]');
-  if(inp) inp.focus();
-  $('#skillTable').parentElement.scrollTop = 9999;
+  const rowBefore = skillDraft.length;
+  /* 以"用户此刻盯着的东西"为锚点做位移补偿：新行出现在原按钮的位置，正在看的部分一动不动 */
+  holdStill(autoAnchor(), ()=>{ skillDraft.push({orig:'', name:'', kind:'level'}); renderSkillDraft(); });
+  const row = $('#skillTable').querySelector('tr[data-i="' + rowBefore + '"]');
+  const inp = row && row.querySelector('input.sk-name');
+  if(inp) inp.focus({preventScroll:true});   // preventScroll：别让浏览器自作主张滚动
+  revealIn(row, 8);                          // 新行看不见时才滚动，且只滚最小的距离
 };
 
 /* ---------- 批量文本录入 ---------- */
@@ -2196,6 +2235,7 @@ function parseSkillText(text){
 function bulkMsg(txt, type){
   const el = $('#bulkMsg');
   el.textContent = txt || '';
+  el.title = txt || '';            // 单行省略，完整文案挂在 title 上悬停可看
   if(type) el.dataset.t = type; else delete el.dataset.t;
 }
 $('#btnSkillBulk').onclick = ()=>{
@@ -2206,12 +2246,14 @@ $('#btnSkillBulk').onclick = ()=>{
   if(!open){
     bulkMsg('');
     const ta = $('#bulkText');
-    ta.focus();
-    ta.scrollIntoView({ block:'nearest' });
+    ta.focus({preventScroll:true});
+    /* 面板在表格末尾，列表长时得滚过去才看得见。这里按"整块面板"定位（含右下按钮），
+       用平滑滚动渲染 —— 读起来是"移过去"而不是"跳过去"。 */
+    revealIn($('#bulkBox'), 12, true);
   }
 };
 $('#btnBulkClose').onclick = ()=>{ $('#bulkBox').style.display = 'none'; $('#btnSkillBulk').classList.remove('primary'); };
-$('#btnBulkClear').onclick = ()=>{ $('#bulkText').value = ''; bulkMsg(''); $('#bulkText').focus(); };
+$('#btnBulkClear').onclick = ()=>{ $('#bulkText').value = ''; bulkMsg(''); $('#bulkText').focus({preventScroll:true}); };
 $('#bulkText').addEventListener('keydown', e=>{
   if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); $('#btnBulkOk').click(); }
 });
@@ -2229,16 +2271,21 @@ $('#btnBulkOk').onclick = ()=>{
     bulkMsg('这 ' + list.length + ' 项在列表里都已存在，未新增。', 'err');
     return;
   }
-  add.forEach(n=>skillDraft.push({orig:'', name:n, kind:'level'}));
-  renderSkillDraft();
+  /* 以录入框为锚点补掉位移：新行只是接在表格末尾，录入框应当留在原处 */
+  holdStill(autoAnchor(), ()=>{
+    add.forEach(n=>skillDraft.push({orig:'', name:n, kind:'level'}));
+    renderSkillDraft();
+  });
 
-  const parts = ['已加入 ' + add.length + ' 项新技能（默认为「熟练度评分」，需要文字录入的可在列表里逐项切换）'];
-  if(skip.length) parts.push('跳过已存在 ' + skip.length + ' 项（' + skip.slice(0,3).join('、') + (skip.length > 3 ? '…' : '') + '）');
-  if(dup.length)  parts.push('批内重复 ' + dup.length + ' 项（' + [...new Set(dup)].slice(0,3).join('、') + ([...new Set(dup)].length > 3 ? '…' : '') + '）');
-  bulkMsg(parts.join('，') + '　—— 确认无误后点右下「应用变更」生效。', 'ok');
+  /* 提示固定单行（超长省略），不因为文字变多把面板撑高 —— 撑高就会带动按钮挪位 */
+  const parts = ['已加入 ' + add.length + ' 项新技能'];
+  if(skip.length) parts.push('跳过已存在 ' + skip.length + ' 项');
+  if(dup.length)  parts.push('批内重复 ' + [...new Set(dup)].length + ' 项');
+  bulkMsg(parts.join(' · ') + '　—— 点右下「应用变更」生效', 'ok');
   ta.value = '';
-  ta.focus();
-  $('#skillTable').parentElement.scrollTop = 9999;
+  ta.focus({preventScroll:true});
+  /* 万一提示文字换行把按钮行挤出了视野，也只补最小的滚动；绝不"滚到底"。 */
+  revealIn($('#btnBulkOk'), 12);
   /* 这里刻意不弹 toast：toast 固定在底部居中，会盖住弹窗自己的「应用变更」按钮，
      而上方那行绿色提示已经足够，且会一直留到用户下一步操作。 */
 };
@@ -2325,7 +2372,11 @@ $('#btnSkillSave').onclick = ()=>{
   state.skillTypes = {};
   final.forEach(f=>{ if(f.kind === 'text') state.skillTypes[f.name] = 'text'; });
   ensureMeta();               // 新增技能：岗位标准补 0（＝该岗位不要求），由用户在 ④ 里按需调整
+  /* 关窗前先记下页面滚动位置：renderAll() 会重建页面结构，浏览器可能把页面滚回顶部，
+     这里显式还原一次，保证"应用变更"前后视野不跳。 */
+  const backY = window.scrollY;
   save(); renderAll();
+  window.scrollTo(0, backY);
   skillMask.classList.remove('on');
 
   const parts = [];
@@ -2603,32 +2654,6 @@ $('#btnImpConfirm').onclick = ()=>{
   if(note.length) msg += '\n\n提示：\n· ' + note.join('\n· ');
   msg += '\n\n接下来请到「② 技能评分」录入熟练度。';
   alert(msg);
-};
-
-/* =========================================================
-   示例数据
-   ========================================================= */
-$('#btnLoadDemo').onclick = ()=>{
-  if(state.people.length && !confirm('将覆盖当前名单，确定加载示例数据？')) return;
-  const demo = [
-    ['1001','富阳农商银行','富春支行','88001','张三','综合柜员',  {柜面业务:3,社保业务:2,理财辅助:2,对公业务:1}],
-    ['1001','富阳农商银行','富春支行','88002','李四','综合柜员',  {柜面业务:2,社保业务:3,理财辅助:2,对公业务:2}],
-    ['1001','富阳农商银行','富春支行','88003','王五','客户经理',  {柜面业务:1,社保业务:1,理财辅助:3,对公业务:3}],
-    ['1001','富阳农商银行','富春支行','88004','赵敏','客户经理',  {柜面业务:2,社保业务:1,理财辅助:2,对公业务:3}],
-    ['1001','富阳农商银行','富春支行','88005','钱伟','大堂经理',  {柜面业务:2,社保业务:2,理财辅助:1,对公业务:1}],
-    ['1002','富阳农商银行','鹿山支行','88006','孙丽','综合柜员',  {柜面业务:3,社保业务:2,理财辅助:1,对公业务:1}],
-    ['1002','富阳农商银行','鹿山支行','88007','周强','客户经理',  {柜面业务:1,社保业务:2,理财辅助:3,对公业务:2}],
-    ['1002','富阳农商银行','鹿山支行','88008','吴静','运营主管',  {柜面业务:3,社保业务:3,理财辅助:2,对公业务:2}],
-    ['1002','富阳农商银行','鹿山支行','88009','郑浩','综合柜员',  {柜面业务:2,社保业务:1,理财辅助:1,对公业务:1}],
-    ['1003','富阳农商银行','银湖支行','88010','冯雪','综合柜员',  {柜面业务:3,社保业务:3,理财辅助:2,对公业务:1}],
-    ['1003','富阳农商银行','银湖支行','88011','陈刚','客户经理',  {柜面业务:1,社保业务:2,理财辅助:3,对公业务:3}],
-    ['1003','富阳农商银行','银湖支行','88012','褚婷','大堂经理',  {柜面业务:2,社保业务:2,理财辅助:2,对公业务:2}]
-  ].map(d=>({id:U(),orgNo:d[0],orgName:d[1],branch:d[2],tellerNo:d[3],name:d[4],post:d[5],skills:d[6]}));
-  state.people = demo;
-  state.standards = JSON.parse(JSON.stringify(DEFAULT_STD));
-  state.mxTitle = '团队技能匹配矩阵';
-  state.mxSubtitle = '富阳农商银行 · 示例数据';
-  save(); renderAll();
 };
 
 /* =========================================================

@@ -126,6 +126,9 @@ td input:focus{border-color:var(--primary);background:#fff}
 .pill{display:inline-block;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:600}
 /* 熟练度标签居中：▲ 绝对定位在标签外侧，不参与布局，标签始终真正居中 */
 .fit-cell{text-align:center}
+/* 本列标签一律等宽（词表最长 3 字：未掌握/待培养/精通），这样 ▲ 才能对齐成一条竖线；
+   若标签随字数变宽，▲ 的横坐标就会跟着漂（2 字比 3 字窄 11px） */
+.fit-cell .pill{min-width:52px;text-align:center;white-space:nowrap}
 .fit-wrap{position:relative;display:inline-block}
 .fit-flag{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:3px;color:#c0392b;font-size:11px;line-height:1}
 .pill.g{background:#e7f5ee;color:var(--ok)}

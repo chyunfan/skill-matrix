@@ -134,6 +134,7 @@ label.f input{width:100%;height:38px}
   <span class="sub">厅堂人员画像 · 用户管理</span>
   <span class="sp"></span>
   <span class="who" id="whoBox"></span>
+  <button id="btnBack" style="display:none">← 返回厅堂画像</button>
   <button id="btnReload" style="display:none">刷新</button>
   <button id="btnOut" style="display:none">退出登录</button>
 </div>
@@ -166,6 +167,7 @@ label.f input{width:100%;height:38px}
       <h2>无权访问</h2>
       <p class="desc">本页仅限管理员使用。如果你认为这是误判，请联系系统管理员核对账号角色。</p>
       <div class="btnrow">
+        <button id="btnNoAuthBack">返回厅堂画像</button>
         <button class="pri" id="btnNoAuthLogin">切换账号</button>
         <button id="btnNoAuthOut">退出登录</button>
       </div>
@@ -365,6 +367,8 @@ function show(id){
   const main = id === 'vMain';
   $('#btnReload').style.display = main ? '' : 'none';
   $('#btnOut').style.display    = (main || id === 'vPwd') ? '' : 'none';
+  /* 「返回厅堂画像」只对已登录的人显示 —— 未登录 / 没权限的视图上出现会把人绕回登录页 */
+  $('#btnBack').style.display   = (main || id === 'vPwd') ? '' : 'none';
 }
 function msg(el, text, type){
   const n = typeof el === 'string' ? $(el) : el;
@@ -1077,9 +1081,12 @@ async function doLogout(){
  * ===================================================================== */
 $('#btnReload').addEventListener('click', () => { msg('#listMsg',''); loadUsers($('#q').value.trim()); });
 $('#btnOut').addEventListener('click', doLogout);
+/* 返回主程序。用 pageUrl 推导，子路径部署（/skill-matrix）下也不会跑到根目录去 */
+$('#btnBack').addEventListener('click', () => { location.href = pageUrl('skill-matrix.html'); });
 $('#btnSetupRetry').addEventListener('click', boot);
 $('#btnGoLogin').addEventListener('click', () => { location.href = pageUrl('login.html'); });
 $('#btnNoAuthLogin').addEventListener('click', () => { location.href = pageUrl('login.html'); });
+$('#btnNoAuthBack').addEventListener('click', () => { location.href = pageUrl('skill-matrix.html'); });
 $('#btnNoAuthOut').addEventListener('click', doLogout);
 $('#btnPwdOut').addEventListener('click', doLogout);
 

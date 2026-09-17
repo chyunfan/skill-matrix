@@ -47,6 +47,21 @@ body{
 .brand .ver{font-size:11px;color:var(--faint)}
 .topbar .spacer{flex:1}
 .saveflag{font-size:12px;color:var(--faint)}
+/* ---------- 账号区（云端模式） ---------- */
+.who{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.who .nm{color:var(--text);font-weight:600}
+.who .tag{font-size:11px;line-height:1.5;padding:1px 8px;border-radius:20px;background:var(--primary-l);color:var(--primary-d);border:1px solid #cfe1f5;white-space:nowrap}
+.who .tag.ro{background:#fdf3e3;color:var(--warn);border-color:#f0dcb4}
+.who .tag.gray{background:#f1f5f9;color:var(--muted);border-color:var(--line)}
+.who .sep{width:1px;height:13px;background:var(--line)}
+.lk{font-size:12px;color:var(--primary);background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
+.lk:hover{text-decoration:underline}
+body.ro .hide-ro{display:none!important}
+body.ro input[data-id],body.ro input.note-inp{cursor:not-allowed}
+body.ro .sc-cell{cursor:not-allowed}
+/* 配置只读（支行账号看技能项与岗位标准）：隐藏增删入口，下拉置灰不可点 */
+body.cfg-ro .hide-cfg{display:none!important}
+body.cfg-ro .std-sel{pointer-events:none;background:#f8fafc;color:var(--muted);border-color:var(--line)}
 /* ---------- 标签页 ---------- */
 .tabs{display:flex;gap:2px;background:var(--card);padding:0 22px;border-bottom:1px solid var(--line);position:sticky;top:57px;z-index:39}
 .tab{
@@ -328,9 +343,10 @@ select[disabled]{opacity:.5;cursor:not-allowed}
 <body>
 
 <div class="topbar">
-  <div class="brand"><h1><span class="dot"></span>厅堂人员画像</h1><span class="ver">v1.0</span></div>
+  <div class="brand"><h1><span class="dot"></span>厅堂人员画像</h1><span class="ver">v1.1</span></div>
   <div class="spacer"></div>
   <span class="saveflag" id="saveFlag">数据自动保存在本机浏览器</span>
+  <div class="who" id="whoBox" style="display:none"></div>
   <button class="btn sm" id="btnHelp">使用说明</button>
 </div>
 
@@ -346,12 +362,12 @@ select[disabled]{opacity:.5;cursor:not-allowed}
 <!-- ============ ① 人员名单 ============ -->
 <section class="panel on" id="panel-people">
   <div class="toolbar">
-    <button class="btn primary" id="btnOpenImport">导入名单</button>
+    <button class="btn primary hide-ro" id="btnOpenImport">导入名单</button>
     <button class="btn" id="btnTplTop">下载导入模板</button>
-    <button class="btn" id="btnAddPerson">＋ 新增人员</button>
-    <button class="btn" id="btnLoadDemo">加载示例数据</button>
+    <button class="btn hide-ro" id="btnAddPerson">＋ 新增人员</button>
+    <button class="btn hide-ro" id="btnLoadDemo">加载示例数据</button>
     <div class="spacer"></div>
-    <button class="btn danger" id="btnClearAll">清空全部数据</button>
+    <button class="btn danger hide-ro" id="btnClearAll">清空全部数据</button>
   </div>
 
   <div class="card">
@@ -386,11 +402,11 @@ select[disabled]{opacity:.5;cursor:not-allowed}
     <select id="scorePostFilter"><option value="">全部岗位</option></select>
     <select id="scoreBranchFilter"><option value="">全部支行</option></select>
     <div class="spacer"></div>
-    <button class="btn sm" id="btnManageSkill">⚙ 技能项管理</button>
-    <span class="hintline">批量设置：</span>
-    <select id="bulkSkill"></select>
-    <select id="bulkLevel"></select>
-    <button class="btn sm" id="btnBulkApply">应用到筛选结果</button>
+    <button class="btn sm hide-cfg" id="btnManageSkill">⚙ 技能项管理</button>
+    <span class="hintline hide-ro">批量设置：</span>
+    <select id="bulkSkill" class="hide-ro"></select>
+    <select id="bulkLevel" class="hide-ro"></select>
+    <button class="btn sm hide-ro" id="btnBulkApply">应用到筛选结果</button>
   </div>
 
   <div class="card">
@@ -483,7 +499,7 @@ select[disabled]{opacity:.5;cursor:not-allowed}
       岗位技能标准与人岗匹配度
       <span class="sub">设定各岗位对各技能项的期望等级，自动测算匹配度（岗位标准为全局设置，不随支行筛选变化）</span>
       <div class="spacer"></div>
-      <button class="btn sm" id="btnAddPost">＋ 新增岗位标准</button>
+      <button class="btn sm hide-cfg" id="btnAddPost">＋ 新增岗位标准</button>
     </div>
     <div class="card-body">
       <div id="stdEditor" style="margin-bottom:20px"></div>
@@ -557,7 +573,7 @@ select[disabled]{opacity:.5;cursor:not-allowed}
       团队成员技能排名、岗位技能标准、人岗匹配度三张表<b>分页显示</b>（岗位技能标准与人岗匹配度默认每页 20 条；<b>团队成员技能排名的条数会自动对齐左侧「团队技能画像」的高度</b>，好让两栏齐平、不给左栏留一大片空白），分页条右侧可直接改每页条数 —— 排名的手改过之后就固定用你设的值，切换支行或重新导入名单再恢复自动对齐。切换支行或导入名单后自动回到第 1 页；<b>导出 Excel 与打印都输出全部人员</b>，不受分页影响（打印时会自动展开全部行）。<br>
       点右上角<b>「导出 Excel」</b>可把当前筛选范围内的分析结果导出为 4 个工作表：<b>数据统计 / 团队技能画像 / 团队成员技能排名 / 岗位技能标准与人岗匹配度</b>。文件名会自动带上支行名与日期（如「团队技能分析-富春支行-20260914.xlsx」）。若配置了<b>文字录入项</b>（如"员工优缺点"），它们会作为附列出现在「团队成员技能排名」与「人岗匹配度」两张表里，但不参与各项统计指标。离线取不到 Excel 组件时会自动改导出 `.xls` 格式（工作表结构一致，Excel 打开若提示格式选"是"即可）。</p>
       <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
-      <p style="color:var(--muted)">数据保存在本机浏览器（localStorage），不上传任何服务器。清除浏览器数据会导致内容丢失，重要数据请及时导出。</p>
+      <p id="helpStorage" style="color:var(--muted)">数据按账号权限保存在服务器，浏览器不持有任何密钥；未登录时（本地文件打开）改用本机浏览器存储。清除浏览器数据会导致本机那份丢失，重要数据请及时导出。</p>
     </div>
     <div class="modal-foot"><div class="spacer"></div><button class="btn primary" id="btnHelpClose">知道了</button></div>
   </div>
@@ -761,17 +777,97 @@ function fitRankSize(list, target, htmlOf){
   return Math.max(3, Math.min(PAGE_MAX, Math.round((target - overhead) / pitch)));
 }
 
-/* ---------- 存储 ---------- */
-function save(){
-  try{
-    state.skillList = SKILLS.slice();
-    localStorage.setItem(KEY, JSON.stringify(state));
-    const d = new Date();
-    document.getElementById('saveFlag').textContent =
-      '已保存 ' + d.toLocaleTimeString('zh-CN',{hour12:false});
-  }catch(e){ console.warn(e); }
+/* =========================================================
+   云端同步（P2）
+   ---------------------------------------------------------
+   两种运行形态，自动判别：
+     ① 有登录令牌        → 云端模式：业务数据存服务端 skillm_state
+                            一行一支行；全行管理员看全行，支行账号只看本支行
+     ② 无令牌 + 本地文件 → 单机模式：仍然存在本机浏览器（离线降级入口）
+   本机存储始终保留一份缓存：刷新时先把界面撑起来，再拉云端覆盖；断网时也能看。
+   ========================================================= */
+
+/* 接口前缀：站点根域部署 → /api；子路径部署（/skill-matrix）→ /skill-matrix/api。
+   不能用相对路径 "api/data"：页面 /skill-matrix 无尾斜杠时会被解析到根域。 */
+const API_BASE = (function(){
+  let p = location.pathname.replace(/\/+$/, '');
+  if(/\.html?$/i.test(p)) p = p.replace(/\/[^/]*$/, '');
+  return p + '/api';
+})();
+/* 站内跳转同理，一律拼绝对路径 */
+function pageUrl(name){
+  let p = location.pathname.replace(/\/+$/, '');
+  if(/\.html?$/i.test(p)) p = p.replace(/\/[^/]*$/, '');
+  return p + '/' + String(name).replace(/^\/+/, '');
 }
-function load(){
+
+const TKEY = 'matrix_token';
+function getToken(){ try{ return localStorage.getItem(TKEY) || ''; }catch(e){ return ''; } }
+function clearToken(){ try{ localStorage.removeItem(TKEY); }catch(e){} }
+
+/* 调自己的后端：调用处统一写 '/api/xxx'，这里换成实际前缀 */
+async function api(path, opt){
+  opt = opt || {};
+  const headers = { 'Content-Type': 'application/json' };
+  const tk = getToken();
+  if(tk) headers['Authorization'] = 'Bearer ' + tk;
+  const url = path.indexOf('/api') === 0 ? API_BASE + path.slice(4) : path;
+
+  let res;
+  try{
+    res = await fetch(url, {
+      method: opt.method || 'GET', headers: headers,
+      body: opt.body ? JSON.stringify(opt.body) : undefined,
+      cache:'no-store', keepalive: !!opt.keepalive
+    });
+  }catch(e){
+    return { ok:false, status:0, code:'network', msg:'无法连接服务器（' + (e.message || e) + '）' };
+  }
+  let data = null;
+  try{ data = await res.json(); }catch(e){ data = null; }
+  if(!res.ok){
+    return { ok:false, status:res.status, code:(data && data.code) || '',
+             msg:(data && data.msg) || ('HTTP ' + res.status) };
+  }
+  return Object.assign({ ok:true, status:res.status }, data || {});
+}
+
+let CLOUD = false;                 // 是否云端模式（登录令牌有效且服务端可达）
+let ME = null;                     // 账号档案
+let CAN_EDIT = true;               // 能不能改业务数据（评分 / 名单）
+let CAN_CONFIG = true;             // 能不能改全行统一配置（技能项 / 岗位标准 / 标题）
+let SCOPE_ALL = false;             // 是不是全行范围（false = 只看本支行）
+let syncedPeople = Object.create(null);   // _id -> 已同步的 JSON 快照
+let syncedCfg = '';                       // 已同步的配置快照
+let syncTimer = null, syncing = false, syncAgain = false;
+
+/** 提交给服务端的人员结构（只带白名单字段，id 换成 _id 做键） */
+function slimPerson(p){
+  const o = { _id: p.id, branch: p.branch || '' };
+  ['orgNo','orgName','tellerNo','name','post'].forEach(k=>{ o[k] = p[k] || ''; });
+  o.skills = p.skills || {};
+  o.notes  = p.notes  || {};
+  return o;
+}
+/** 全行统一配置的快照（只在变了才提交） */
+function cfgSnapshot(){
+  return { skillList:SKILLS.slice(), skillTypes:state.skillTypes || {},
+           standards:state.standards || {}, mxTitle:state.mxTitle || '', mxSubtitle:state.mxSubtitle || '' };
+}
+function setFlag(txt, warn){
+  const el = document.getElementById('saveFlag');
+  if(!el) return;
+  el.textContent = txt;
+  el.style.color = warn ? 'var(--warn)' : '';
+}
+function syncOkText(){
+  const d = new Date();
+  const where = SCOPE_ALL ? '全行' : ((ME && ME.branch) || '本支行');
+  return where + '已同步 ' + d.toLocaleTimeString('zh-CN',{hour12:false});
+}
+
+/* ---------- 把本机缓存读进内存（云端模式下也先用它撑界面，避免白屏） ---------- */
+function loadLocalInto(){
   try{
     const raw = localStorage.getItem(KEY);
     if(!raw) return false;
@@ -794,6 +890,183 @@ function load(){
   }catch(e){ console.warn(e); }
   return false;
 }
+
+/* ---------- 服务端数据 → 内存 ---------- */
+function mergeRemote(r){
+  ME = r.me || null;
+  SCOPE_ALL = r.scope === 'all';
+  CAN_EDIT = !!r.can_edit;
+  CAN_CONFIG = !!r.can_config;
+  state.people = (r.people || []).map(p=>({
+    id: p._id || U(),
+    orgNo: p.orgNo || '', orgName: p.orgName || '', branch: p.branch || '',
+    tellerNo: p.tellerNo || '', name: p.name || '', post: p.post || '',
+    skills: p.skills || {}, notes: p.notes || {}
+  }));
+  const c = r.config || {};
+  state.skillList = (Array.isArray(c.skillList) && c.skillList.length) ? c.skillList.slice() : DEFAULT_SKILLS.slice();
+  SKILLS = state.skillList.slice();
+  state.skillTypes = c.skillTypes || {};
+  state.standards  = c.standards || {};
+  state.mxTitle    = c.mxTitle || '团队技能匹配矩阵';
+  state.mxSubtitle = c.mxSubtitle || '';
+  ensureMeta();
+  resyncSnapshot();
+}
+function resyncSnapshot(){
+  syncedPeople = Object.create(null);
+  state.people.forEach(p=>{ syncedPeople[p.id] = JSON.stringify(slimPerson(p)); });
+  syncedCfg = JSON.stringify(cfgSnapshot());
+}
+/** 本机缓存也写一份（刷新时先显示它，断网时靠它） */
+function saveLocal(){
+  try{
+    state.skillList = SKILLS.slice();
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }catch(e){ console.warn(e); }
+}
+
+/* ---------- 提交：按"人员"为单位合并，防抖 700ms ---------- */
+function scheduleSync(){
+  if(!CLOUD) return;
+  if(syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(()=>{ syncTimer = null; flush(); }, 700);
+}
+async function flush(opt){
+  if(!CLOUD) return;
+  if(syncing){ syncAgain = true; return; }
+  syncing = true;
+  try{
+    const now = Object.create(null);
+    state.people.forEach(p=>{ now[p.id] = JSON.stringify(slimPerson(p)); });
+
+    const body = {}, people = [], removed = [];
+    state.people.forEach(p=>{ if(now[p.id] !== syncedPeople[p.id]) people.push(slimPerson(p)); });
+    Object.keys(syncedPeople).forEach(id=>{ if(!(id in now)) removed.push(id); });
+    const cfgStr = JSON.stringify(cfgSnapshot());
+
+    if(people.length) body.people = people;
+    if(removed.length) body.removed = removed;
+    if(cfgStr !== syncedCfg) body.config = JSON.parse(cfgStr);
+    if(!body.people && !body.removed && !body.config){ setFlag(syncOkText()); return; }
+
+    const r = await api('/api/data', { method:'POST', body: body, keepalive: !!(opt && opt.keepalive) });
+    if(!r.ok){
+      if(r.code === 'unauthorized'){ clearToken(); location.replace(pageUrl('login.html')); return; }
+      throw new Error(r.msg || '同步失败');
+    }
+    if(r.denied && r.denied.length) toast(r.denied.join('；'));
+    syncedPeople = now;                       // 记下服务端当前的样子
+    if(body.config) syncedCfg = cfgStr;
+    setFlag(syncOkText());
+  }catch(e){
+    setFlag('未同步：' + (e.message || '网络异常') + '（改动仍留在本机，恢复网络后继续）', true);
+  }finally{
+    syncing = false;
+    if(syncAgain){ syncAgain = false; flush(); }
+  }
+}
+
+/* ---------- 顶栏账号区 ---------- */
+function renderWho(){
+  const box = document.getElementById('whoBox');
+  if(!box) return;
+  if(!CLOUD || !ME){ box.style.display = 'none'; return; }
+  const scopeTxt = SCOPE_ALL ? '全行' : ((ME.branch || '未设支行') + '（本支行）');
+  const permTxt  = !CAN_EDIT ? '只读' : (CAN_CONFIG ? '可录入 · 可维护技能项' : '可录入');
+  box.style.display = 'flex';
+  box.innerHTML =
+    '<span class="nm">' + esc(ME.name || ME.teller_no) + '</span>' +
+    '<span class="tag gray">' + esc(scopeTxt) + '</span>' +
+    '<span class="tag' + (CAN_EDIT ? '' : ' ro') + '">' + esc(permTxt) + '</span>' +
+    '<span class="sep"></span>' +
+    (ME.role === 'admin' ? '<button class="lk" id="lkAdmin">用户管理</button><span class="sep"></span>' : '') +
+    '<button class="lk" id="lkPwd">修改密码</button><span class="sep"></span>' +
+    '<button class="lk" id="lkOut">退出登录</button>';
+
+  const a = document.getElementById('lkAdmin');
+  if(a) a.onclick = ()=>{ location.href = pageUrl('admin.html'); };
+  document.getElementById('lkPwd').onclick = ()=>{ location.href = pageUrl('login.html'); };
+  document.getElementById('lkOut').onclick = ()=>{
+    if(!confirm('退出登录？')) return;
+    clearToken();
+    location.href = pageUrl('login.html');
+  };
+}
+
+/* ---------- 权限落地：只读 / 配置只读 / 版块可见性 ---------- */
+/* 会被拦下的"改数据"入口。集中一处，便于审查有没有漏。 */
+const BLOCK_EDIT = '#peopleBody input[data-id], #peopleBody [data-del], ' +
+  '#scoreBody .sc-cell, #scoreBody input.note-inp, ' +
+  '#stdEditor .std-sel, #stdEditor [data-delpost], #mxTitle, #mxSubtitle, ' +
+  '#btnOpenImport, #btnAddPerson, #btnLoadDemo, #btnClearAll, #btnBulkApply, ' +
+  '#btnAddPost, #scoreTable th.skcol, #skillMask';
+/* 只属于"全行统一配置"的部分：技能项 / 岗位标准 / 矩阵标题 */
+const BLOCK_CFG = '#stdEditor .std-sel, #stdEditor [data-delpost], #mxTitle, #mxSubtitle, ' +
+  '#btnAddPost, #skillMask';
+
+function hit(sel, e){
+  const t = e.target;
+  return !!(t && t.closest && t.closest(sel));
+}
+function applyPermissions(){
+  document.body.classList.toggle('ro', CLOUD && !CAN_EDIT);
+  document.body.classList.toggle('cfg-ro', CLOUD && !CAN_CONFIG);
+
+  const hp = document.getElementById('helpStorage');
+  if(hp){
+    if(!CLOUD){
+      hp.textContent = '当前是本机模式（未登录），数据保存在本机浏览器，不上传任何服务器。' +
+        '清除浏览器数据会导致内容丢失，重要数据请及时导出。';
+    } else {
+      hp.textContent = SCOPE_ALL
+        ? '当前是全行账号：数据保存在服务器，可以看到并维护全部支行的录入情况。' +
+          '技能项与岗位技能标准为全行统一，只有全行管理员能改。'
+        : '当前是「' + ((ME && ME.branch) || '未设支行') + '」账号：数据保存在服务器，' +
+          '只能看到和修改本支行的人员与评分；技能项与岗位标准由全行管理员统一维护。';
+    }
+  }
+}
+
+/* 只读 / 配置只读的门禁：捕获阶段拦在最前面，业务处理不会被执行 */
+function guardReadonly(e){
+  if(!CLOUD) return;
+  if(!CAN_EDIT && (hit(BLOCK_EDIT, e) || hit('#btnManageSkill', e))){
+    e.preventDefault(); e.stopPropagation();
+    toast('只读账号：不能修改数据。需要录入请让管理员开放「允许编辑评分」。');
+    return;
+  }
+  if(!CAN_CONFIG && hit(BLOCK_CFG, e)){
+    e.preventDefault(); e.stopPropagation();
+    toast('技能项与岗位技能标准是全行统一的，由全行管理员维护。');
+  }
+}
+['click','input','change','contextmenu'].forEach(function(t){
+  document.addEventListener(t, guardReadonly, true);
+});
+
+/* ---------- 存储（对外仍是 save / load 两个名字，调用处不用改） ---------- */
+function save(){
+  saveLocal();
+  if(CLOUD){
+    setFlag('待同步…', true);
+    scheduleSync();
+  }else{
+    const d = new Date();
+    setFlag('已保存本机 ' + d.toLocaleTimeString('zh-CN',{hour12:false}));
+  }
+}
+function load(){ return loadLocalInto(); }
+
+/* 页面要关了/切走了：把还在防抖队列里的改动立刻送出去，别丢在本地 */
+function flushPending(ev){
+  if(!CLOUD || !syncTimer) return;
+  clearTimeout(syncTimer); syncTimer = null;
+  flush({ keepalive: !!(ev && ev.type === 'beforeunload') });
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') flushPending(); });
+window.addEventListener('beforeunload', flushPending);
+window.addEventListener('pagehide', flushPending);
 
 /* =========================================================
    文本解析
@@ -903,6 +1176,11 @@ function pyKey(s){
 /* =========================================================
    ① 人员名单
    ========================================================= */
+/* 支行账号的「支行」列锁定：数据边界由账号归属决定，不让人在名单里改来改去 */
+function branchLocked(){ return CLOUD && !SCOPE_ALL && !!(ME && ME.branch); }
+/* 只读账号：名单里的输入框直接渲染成只读，删除按钮不渲染 —— 不给"能改"的错觉 */
+function readonlyUI(){ return CLOUD && !CAN_EDIT; }
+
 function renderPeople(){
   const tb = $('#peopleBody');
   $('#tabPeople').textContent = state.people.length;
@@ -911,13 +1189,13 @@ function renderPeople(){
     tb.innerHTML = '<tr><td colspan="8"><div class="empty">还没有人员数据<br><b>点击上方「导入名单」，或加载示例数据试用</b></div></td></tr>';
     return;
   }
+  const lock = branchLocked() ? ' readonly title="支行由账号归属决定（' + esc(ME.branch) + '），不能在这里改"' : '';
+  const ro = readonlyUI() ? ' readonly title="只读账号，不能修改"' : '';
   tb.innerHTML = state.people.map((p,i)=>`
     <tr data-id="${p.id}">
       <td class="idx">${i+1}</td>
-      ${FIELDS.map(f=>`<td><input type="text" data-id="${p.id}" data-f="${f.k}" value="${esc(p[f.k])}" placeholder="${f.label}"></td>`).join('')}
-      <td style="text-align:center">
-        <button class="btn ghost sm" data-del="${p.id}" title="删除">✕</button>
-      </td>
+      ${FIELDS.map(f=>`<td><input type="text" data-id="${p.id}" data-f="${f.k}" value="${esc(p[f.k])}" placeholder="${f.label}"${ro}${(f.k === 'branch' ? lock : '')}></td>`).join('')}
+      <td style="text-align:center">${readonlyUI() ? '' : `<button class="btn ghost sm" data-del="${p.id}" title="删除">✕</button>`}</td>
     </tr>`).join('');
 }
 function refreshFilters(){
@@ -1659,7 +1937,9 @@ $('#peopleBody').addEventListener('click', e=>{
   }
 });
 $('#btnAddPerson').onclick = ()=>{
-  state.people.push({id:U(),orgNo:'',orgName:'',branch:'',tellerNo:'',name:'',post:'',skills:{},notes:{}});
+  state.people.push({id:U(),orgNo:'',orgName:'',
+    branch: branchLocked() ? ME.branch : '',
+    tellerNo:'',name:'',post:'',skills:{},notes:{}});
   save(); renderAll();
   const wrap = $('#peopleWrap');
   wrap.scrollTop = wrap.scrollHeight;
@@ -1669,7 +1949,9 @@ $('#btnAddPerson').onclick = ()=>{
 };
 $('#btnClearAll').onclick = ()=>{
   if(!state.people.length) return;
-  if(confirm('确定清空全部人员与技能数据？此操作不可撤销。')){
+  const where = !CLOUD ? '全部' : (SCOPE_ALL ? '全部支行' : '本支行');
+  if(confirm('确定清空' + where + '的人员与技能数据（共 ' + state.people.length + ' 人）？此操作不可撤销。\n\n' +
+             '技能项、岗位技能标准与矩阵标题不受影响。')) {
     state.people = []; save(); renderAll();
   }
 };
@@ -2282,6 +2564,8 @@ $('#btnImpConfirm').onclick = ()=>{
     alert('没有有效数据。\n导入要求：必须映射「姓名」列，且每一行都要填写姓名。');
     return;
   }
+  // 支行账号导入的行一律归到本支行（模板里的支行列不作数，服务端也会再兜一道）
+  if(branchLocked()) list.forEach(np=>{ np.branch = ME.branch; });
 
   let added = 0, updated = 0;
   if(mode === 'replace'){
@@ -2350,20 +2634,97 @@ $('#btnLoadDemo').onclick = ()=>{
 /* =========================================================
    启动
    ========================================================= */
-(function init(){
-  const has = load();
-  if(!has){
-    // 首次打开：空名单 + 默认技能项 + 默认岗位标准。不自动弹窗，由用户自行导入（或点「加载示例数据」）
-    state.people = [];
-    state.skillList = DEFAULT_SKILLS.slice();
-    SKILLS = state.skillList.slice();
-    state.skillTypes = {};
-    state.standards = JSON.parse(JSON.stringify(DEFAULT_STD));
-    ensureMeta();
+function blankState(){
+  state.people = [];
+  state.skillList = DEFAULT_SKILLS.slice();
+  SKILLS = state.skillList.slice();
+  state.skillTypes = {};
+  state.standards = JSON.parse(JSON.stringify(DEFAULT_STD));
+  state.mxTitle = '团队技能匹配矩阵';
+  state.mxSubtitle = '';
+  ensureMeta();
+}
+function snapshotLocal(){
+  return {
+    people: state.people.map(p=>Object.assign({}, p, {skills:Object.assign({},p.skills), notes:Object.assign({},p.notes)})),
+    skillList: SKILLS.slice(),
+    skillTypes: Object.assign({}, state.skillTypes),
+    standards: JSON.parse(JSON.stringify(state.standards || {})),
+    mxTitle: state.mxTitle, mxSubtitle: state.mxSubtitle
+  };
+}
+/* 云端还是空的、本机有一份 → 问一次要不要带上云端（本机那份不会被删） */
+function offerMigrate(snap, r){
+  const tip = CAN_CONFIG ? '\n（技能项与岗位技能标准也会一起带上去）\n' : '\n';
+  if(!confirm('云端还没有任何数据，而本机存着 ' + snap.people.length + ' 人。\n\n' +
+              '要把本机这份数据上传到云端吗？' + tip +
+              '\n选「取消」= 用云端的空白数据，本机那份仍留在浏览器里。')) return;
+
+  state.people = snap.people;
+  if(!SCOPE_ALL) state.people.forEach(p=>{ p.branch = (ME && ME.branch) || p.branch || ''; });
+  if(CAN_CONFIG && !(r.config && r.config.skillList)){
+    state.skillList = snap.skillList; SKILLS = state.skillList.slice();
+    state.skillTypes = snap.skillTypes;
+    state.standards = snap.standards;
+    state.mxTitle = snap.mxTitle; state.mxSubtitle = snap.mxSubtitle;
   }
-  renderAll();
-  renderTplInfo();
-})();
+  ensureMeta();
+  syncedPeople = Object.create(null);
+  syncedCfg = CAN_CONFIG ? '' : JSON.stringify(cfgSnapshot());   // 全行管理员：配置也一并提交
+  saveLocal(); renderAll(); flush();
+}
+
+async function boot(){
+  const tok = getToken();
+  /* 单机模式（离线降级入口）：
+       · 用本地文件打开（file://）
+       · 或显式带 ?local=1 —— 便于断网演练、离线演示与自动化测试
+     除这两种情况外，网页访问一律要求登录，避免"没登录也能进"的错觉。 */
+  let forceLocal = false;
+  try{ forceLocal = location.protocol === 'file:' || new URLSearchParams(location.search).has('local'); }catch(e){}
+
+  if(!tok){
+    if(!forceLocal){ location.replace(pageUrl('login.html')); return; }
+    if(!load()) blankState();
+    renderAll(); renderTplInfo(); applyPermissions();
+    return;
+  }
+  if(forceLocal){
+    if(!load()) blankState();
+    renderAll(); renderTplInfo(); applyPermissions();
+    return;
+  }
+
+  /* 先用本机缓存把界面撑起来，再拉云端覆盖（避免白屏） */
+  if(!load()) blankState();
+  renderAll(); renderTplInfo();
+  setFlag('正在读取云端数据…', true);
+
+  let r;
+  try{ r = await api('/api/data'); }
+  catch(e){ r = { ok:false, status:0, code:'network', msg:(e && e.message) || '网络异常' }; }
+
+  if(!r.ok){
+    if(r.code === 'unauthorized'){ clearToken(); location.replace(pageUrl('login.html')); return; }
+    if(r.code === 'must_change_pwd' || r.code === 'disabled'){
+      alert(r.msg || '账号状态异常，请重新登录');
+      location.replace(pageUrl('login.html')); return;
+    }
+    /* 网络故障：降级为"本机缓存浏览"，明确告知改动不会上传 */
+    setFlag('连不上服务器，当前显示本机缓存（改动不会上传）', true);
+    toast('连不上服务器，已切换为本机缓存显示，请检查网络后刷新。');
+    renderAll(); renderTplInfo(); applyPermissions();
+    return;
+  }
+
+  CLOUD = true;
+  const localSnap = snapshotLocal();
+  mergeRemote(r);
+  renderWho(); applyPermissions(); renderAll(); renderTplInfo();
+  setFlag(syncOkText());
+  if(!r.people.length && localSnap.people.length && CAN_EDIT) offerMigrate(localSnap, r);
+}
+boot();
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>登录 · 人岗匹配矩阵工具</title>
+<title>登录 · 厅堂人员画像</title>
 <style>
 :root{
   --bg:#f4f6f9; --card:#ffffff; --line:#e3e8ef; --line2:#cfd8e3;
@@ -74,7 +74,7 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><span class="dot"></span><h1>人岗匹配矩阵工具</h1></div>
+  <div class="brand"><span class="dot"></span><h1>厅堂人员画像</h1></div>
 
   <!-- ============ 服务端未就绪 ============ -->
   <div class="card view" id="vSetup">
@@ -144,7 +144,6 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
     <button class="btn ghost" id="btnOut" style="margin-top:10px">退出登录</button>
   </div>
 
-  <div class="foot">数据存储于 Supabase · 浏览器不持有任何密钥，全部经服务端代理访问</div>
 </div>
 
 <script>
@@ -169,6 +168,18 @@ const API_BASE = (function () {
   if (/\.html?$/i.test(p)) p = p.replace(/\/[^/]*$/, '');   // URL 直接指向 html 文件
   return p + '/api';                                        // 例：/skill-matrix/api
 })();
+
+/* -------------------------------------------------------------------
+ * 站内翻页链接 —— 和接口前缀同一个坑
+ *   页面在 https://xxx/skill-matrix（无尾斜杠）时，相对路径 'admin.html'
+ *   会被解析成 https://xxx/admin.html（根域），直接 404。
+ *   所以站内跳转一律走这里拼绝对路径。
+ * ----------------------------------------------------------------- */
+function pageUrl(name){
+  let p = location.pathname.replace(/\/+$/, '');            // 去掉尾部斜杠
+  if (/\.html?$/i.test(p)) p = p.replace(/\/[^/]*$/, '');   // 去掉页面文件名
+  return p + '/' + String(name).replace(/^\/+/, '');
+}
 
 const PAGE_LABEL = {
   people:'① 人员名单', score:'② 技能评分', matrix:'③ 匹配矩阵',
@@ -470,7 +481,7 @@ function enterSystem(){
   note.style.display = 'block';
   note.textContent = '主程序接入登录态属于 P2 阶段（尚在开发）。当前可先打开单机版 skill-matrix.html 使用；'
                    + '登录态已保存在本次会话中，接入后会自动识别。';
-  window.open('skill-matrix.html', '_blank');
+  window.open(pageUrl('skill-matrix.html'), '_blank');
 }
 
 /* ---------------- 事件绑定 ---------------- */
@@ -485,7 +496,7 @@ $('#np2').addEventListener('keydown', e => { if (e.key === 'Enter') doChange(); 
 $('#btnBackLogin').addEventListener('click', doLogout);
 $('#btnOut').addEventListener('click', doLogout);
 $('#btnEnter').addEventListener('click', enterSystem);
-$('#btnAdmin').addEventListener('click', () => { location.href = 'admin.html'; });
+$('#btnAdmin').addEventListener('click', () => { location.href = pageUrl('admin.html'); });
 $('#btnRetry').addEventListener('click', boot);
 
 boot();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>用户管理 · 人岗匹配矩阵工具</title>
+<title>用户管理 · 厅堂人员画像</title>
 <style>
 :root{
   --bg:#f4f6f9; --card:#ffffff; --line:#e3e8ef; --line2:#cfd8e3;
@@ -131,7 +131,7 @@ label.f input{width:100%;height:38px}
 <div class="topbar">
   <span class="dot"></span>
   <h1>用户管理</h1>
-  <span class="sub">人岗匹配矩阵工具 · P1</span>
+  <span class="sub">厅堂人员画像 · 用户管理</span>
   <span class="sp"></span>
   <span class="who" id="whoBox"></span>
   <button id="btnReload" style="display:none">刷新</button>
@@ -281,7 +281,7 @@ label.f input{width:100%;height:38px}
     </div>
   </div>
 
-  <div class="foot">数据存储于 Supabase · 浏览器不持有任何密钥，全部经服务端代理访问</div>
+
 </div>
 
 <!-- ==================== 确认弹窗 ==================== -->
@@ -333,6 +333,14 @@ const API_BASE = (function () {
   if (/\.html?$/i.test(p)) p = p.replace(/\/[^/]*$/, '');
   return p + '/api';
 })();
+
+/* 站内翻页链接：页面挂在 /skill-matrix（无尾斜杠）时，相对路径 'login.html'
+   会被解析到根域 /login.html → 404。站内跳转一律用这个拼绝对路径。 */
+function pageUrl(name){
+  let p = location.pathname.replace(/\/+$/, '');
+  if (/\.html?$/i.test(p)) p = p.replace(/\/[^/]*$/, '');
+  return p + '/' + String(name).replace(/^\/+/, '');
+}
 
 const PAGE_LABEL = { people:'①人员名单', score:'②技能评分', matrix:'③匹配矩阵',
                      insight:'④分析洞察', admin:'⑤用户管理' };
@@ -1061,7 +1069,7 @@ async function doLogout(){
   setToken('');
   curMe = null;
   sel.clear();
-  location.href = 'login.html';
+  location.href = pageUrl('login.html');
 }
 
 /* =====================================================================
@@ -1070,8 +1078,8 @@ async function doLogout(){
 $('#btnReload').addEventListener('click', () => { msg('#listMsg',''); loadUsers($('#q').value.trim()); });
 $('#btnOut').addEventListener('click', doLogout);
 $('#btnSetupRetry').addEventListener('click', boot);
-$('#btnGoLogin').addEventListener('click', () => { location.href = 'login.html'; });
-$('#btnNoAuthLogin').addEventListener('click', () => { location.href = 'login.html'; });
+$('#btnGoLogin').addEventListener('click', () => { location.href = pageUrl('login.html'); });
+$('#btnNoAuthLogin').addEventListener('click', () => { location.href = pageUrl('login.html'); });
 $('#btnNoAuthOut').addEventListener('click', doLogout);
 $('#btnPwdOut').addEventListener('click', doLogout);
 

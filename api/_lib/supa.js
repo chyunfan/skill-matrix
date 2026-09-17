@@ -83,9 +83,47 @@ function userByTeller(teller) {
   return one('skillm_app_users', 'teller_no', teller);
 }
 
+/* ------------------------------------------------------- 业务数据（P2）--- */
+
+/**
+ * 读一行 skillm_state。
+ * scope_key = 'ALL' 是全行配置，其余是支行名（存该支行的人员名单与评分）。
+ * 行不存在时返回 null —— 调用方按"这份数据还没人录过"处理。
+ */
+async function stateGet(scopeKey) {
+  const r = await one('skillm_state', 'scope_key', scopeKey, 'scope_key,data,updated_at,updated_by');
+  return r;
+}
+
+/** 读全部行（全行管理员需要拿到所有支行的数据）。失败时返回 [] */
+async function stateAll() {
+  const r = await rest('skillm_state', '?select=scope_key,data,updated_at,updated_by&order=scope_key.asc');
+  return (r.ok && Array.isArray(r.data)) ? r.data : [];
+}
+
+/**
+ * 写一行（有则覆盖，无则新建）。
+ * ON CONFLICT 由 PostgREST 的 resolution=merge-duplicates 实现，主键是 scope_key。
+ */
+function statePut(scopeKey, data, by) {
+  return rest('skillm_state', '?on_conflict=scope_key', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates,return=minimal',
+    body: [{
+      scope_key: scopeKey,
+      data: data || {},
+      updated_at: new Date().toISOString(),
+      updated_by: String(by || '').slice(0, 60)
+    }]
+  });
+}
+
 module.exports = {
   missingEnv: missingEnv,
   rest: rest,
   one: one,
-  userByTeller: userByTeller
+  userByTeller: userByTeller,
+  stateGet: stateGet,
+  stateAll: stateAll,
+  statePut: statePut
 };
